@@ -10,6 +10,11 @@ import (
 type ConfigStruct struct {
 	MaxShortUrlLen int    `yaml:"max_short_url_len"`
 	Port           string `yaml:"port"`
+	Redis          struct {
+		Addr     string `yaml:"addr"`
+		Password string `yaml:"password"`
+		TTL      int    `yaml:"ttl_in_minutes"`
+	} `yaml:"redis"`
 }
 
 var ConfigData ConfigStruct

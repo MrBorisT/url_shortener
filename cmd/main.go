@@ -5,7 +5,7 @@ import (
 
 	"github.com/MrBorisT/go_url_shortener/internal/config"
 	"github.com/MrBorisT/go_url_shortener/internal/domain"
-	"github.com/MrBorisT/go_url_shortener/internal/repository"
+	redis_repository "github.com/MrBorisT/go_url_shortener/internal/domain/repository/redis"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
 )
@@ -20,7 +20,11 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	repo := repository.NewInMemoryRepository()
+	// in-memory "db"
+	// repo := repository.NewInMemoryRepository()
+
+	// redis db
+	repo := redis_repository.NewInMemoryRepository()
 	urlShortenerService := domain.NewService(repo, config.ConfigData.MaxShortUrlLen)
 
 	app.Get("/", func(c *fiber.Ctx) error {
