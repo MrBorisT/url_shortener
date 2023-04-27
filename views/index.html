@@ -1,94 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>URL Shortener | Main Page</title>
-    <style>
-      #main {
-        margin: auto;
-        width: 20%;
-        border-radius: 10px;
-        background: #888;
-        padding: 18px;
-        box-shadow: #555 5px 5px;
-      }
-      footer {
-        position: fixed;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        background-color: gray;
-        color: white;
-        text-align: center;
-        font-style: italic;
-        text-decoration: none;
-      }
-      a:link {
-        text-decoration: none;
-      }
-      a:visited {
-        text-decoration: none;
-      }
-      a:hover {
-        text-decoration: none;
-      }
-      a:active {
-        text-decoration: none;
-      }
 
-      header {
-        padding: 10px 16px;
-        text-align: center;
-      }
-    </style>
-  </head>
-  <body>
-    <header><h1>URL Shortener</h1></header>
-    <div id="main">
-      <form method="post" action="/shorten">
-        <label for="full-url">Full URL</label>
-        <input id="full-url" name="full-url" type="url" value="" />
-        <button id="submit" type="submit">Get short URL!</button>
-      </form>
-      <h2>Your short URL:</h2>
-      <p
-        id="short-url"
-        style="display: block; font-style: italic; color: whitesmoke"
-      >
-        your short url will be here
-      </p>
-    </div>
-    <footer>
-      <h1>by <a href="https://github.com/MrBorisT">MrBorisT</a></h1>
-    </footer>
-    <script>
-      const button = document.getElementById('submit');
-      const fullURL = document.getElementById('full-url');
-      const shortURL = document.getElementById('short-url');
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>URL Shortener | Main Page</title>
+  <style>
+    #main {
+      margin: auto;
+      width: 20%;
+      border-radius: 10px;
+      background: #888;
+      padding: 18px;
+      box-shadow: #555 5px 5px;
+    }
 
-      button.addEventListener('click', (e) => {
-        e.preventDefault();
-        fetch('/shorten', {
-          method: 'POST',
-          mode: 'cors',
-          cache: 'no-cache',
-          credentials: 'same-origin',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          redirect: 'follow',
-          referrerPolicy: 'no-referrer',
-          body: JSON.stringify(fullURL.value),
-        }).then((response) => {
-          response.json().then((response) => {
-            const shorturlhref = window.location.href + response;
-            shortURL.innerHTML =
-              "<a href='" + shorturlhref + "'>" + shorturlhref + '</a>';
-          });
+    footer {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      background-color: gray;
+      color: white;
+      text-align: center;
+      font-style: italic;
+      text-decoration: none;
+    }
+
+    a:link {
+      text-decoration: none;
+    }
+
+    a:visited {
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: none;
+    }
+
+    a:active {
+      text-decoration: none;
+    }
+
+    header {
+      padding: 10px 16px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>URL Shortener</h1>
+  </header>
+  <div id="main">
+    <form method="post" action="/shorten">
+      <label for="full-url">Full URL</label>
+      <input id="full-url" name="full-url" type="url" value="" placeholder="your url here" />
+      <button id="submit" type="submit">Get short URL!</button>
+    </form>
+    <h2>Your short URL:</h2>
+    <p id="short-url" style="display: block; font-style: italic; color: whitesmoke">
+      your short url will be here
+    </p>
+  </div>
+  <footer>
+    <h1>by <a href="https://github.com/MrBorisT">MrBorisT</a></h1>
+  </footer>
+  <script>
+    const button = document.getElementById('submit');
+    const fullURL = document.getElementById('full-url');
+    const shortURL = document.getElementById('short-url');
+
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      fetch('/shorten', {
+        method: 'POST',
+        mode: 'cors',
+        cache: 'no-cache',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        redirect: 'follow',
+        referrerPolicy: 'no-referrer',
+        body: JSON.stringify(fullURL.value),
+      }).then((response) => {
+        response.json().then((response) => {
+          const shorturlhref = window.location.href + response;
+          shortURL.innerHTML =
+            "<a href='" + shorturlhref + "'>" + shorturlhref + '</a>';
         });
       });
-    </script>
-  </body>
+    });
+    var input = document.getElementById('full-url');
+    input.focus();
+    input.select();
+  </script>
+</body>
+
 </html>
