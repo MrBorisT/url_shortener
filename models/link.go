@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+//db link
 type Link struct {
 	ID          string     `json:"id"`
 	UserID      string     `json:"user_id"`
@@ -11,4 +12,12 @@ type Link struct {
 	DisabledAt  *time.Time `json:"disabled_at,omitempty"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
+}
+
+//requests
+type CreateLinkRequest struct {
+	OriginalURL string `json:"original_url"`
+}
+type UpdateLinkRequest struct {
+	OriginalURL string `json:"original_url"`
 }
