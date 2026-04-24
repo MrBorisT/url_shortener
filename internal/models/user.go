@@ -12,12 +12,11 @@ type User struct {
 }
 
 //requests
-type RegisterRequest struct {
+type UserRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+type JWTToken struct {
+	Token string `json:"token,omitempty"`
 }
