@@ -39,8 +39,9 @@ func main() {
 	defer pool.Close()
 	userStore := storage.NewUserStore(pool)
 	authManager := auth.NewJWTManager(config)
+	linksStore := storage.NewLinksStore(pool)
 
-	r := newRouter(userStore, authManager)
+	r := newRouter(userStore, authManager, linksStore)
 
 	log.Println("started server on port", ":8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
@@ -72,7 +73,7 @@ func newPool(config *config.Config) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-func newRouter(userStore *storage.UserStore, authManager *auth.JWTManager) http.Handler {
+func newRouter(userStore *storage.UserStore, authManager *auth.JWTManager, linksStore *storage.LinksStore) http.Handler {
 	r := chi.NewRouter()
 
 	r.Get("/health", handler.Health)
@@ -82,12 +83,12 @@ func newRouter(userStore *storage.UserStore, authManager *auth.JWTManager) http.
 
 		r.Route("/links", func(r chi.Router) {
 			r.Use(mw.AuthMiddleware(authManager))
-			r.Post("/", handler.CreateLink)
-			r.Get("/", handler.ListLinks)
-			r.Get("/{id}", handler.GetLink)
-			r.Patch("/{id}", handler.UpdateLink)
-			r.Delete("/{id}", handler.DeleteLink)
-			r.Post("/{id}/disable", handler.DisableLink)
+			r.Post("/", handler.CreateLink(linksStore))
+			r.Get("/", handler.ListLinks(linksStore))
+			r.Get("/{id}", handler.GetLink(linksStore))
+			r.Patch("/{id}", handler.UpdateLink(linksStore))
+			r.Delete("/{id}", handler.DeleteLink(linksStore))
+			r.Post("/{id}/disable", handler.DisableLink(linksStore))
 		})
 
 		r.Route("/auth", func(r chi.Router) {
