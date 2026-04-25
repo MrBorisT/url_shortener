@@ -1,10 +1,14 @@
 package models
 
-import "time"
+import (
+	"time"
 
-//db link
+	"github.com/google/uuid"
+)
+
+// db link
 type Link struct {
-	ID          string     `json:"id"`
+	ID          uuid.UUID  `json:"id"`
 	UserID      string     `json:"user_id"`
 	OriginalURL string     `json:"original_url"`
 	ShortCode   string     `json:"short_code"`
@@ -14,10 +18,12 @@ type Link struct {
 	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
-//requests
+// requests
 type CreateLinkRequest struct {
 	OriginalURL string `json:"original_url"`
 }
+
+// maybe add more functionality later
 type UpdateLinkRequest struct {
 	OriginalURL string `json:"original_url"`
 }
