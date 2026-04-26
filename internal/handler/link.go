@@ -10,6 +10,7 @@ import (
 	"github.com/MrBorisT/url_shortener/internal/helper"
 	mw "github.com/MrBorisT/url_shortener/internal/middleware"
 	"github.com/MrBorisT/url_shortener/internal/models"
+	"github.com/MrBorisT/url_shortener/internal/service"
 	"github.com/MrBorisT/url_shortener/internal/storage"
 	"github.com/go-chi/chi/v5"
 )
@@ -68,7 +69,7 @@ func GetLink(linksStore *storage.LinksStore) http.HandlerFunc {
 	}
 }
 
-func CreateLink(linksStore *storage.LinksStore) http.HandlerFunc {
+func CreateLink(linkService *service.LinkService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := mw.GetUserID(r.Context())
 		if !ok {
@@ -86,13 +87,14 @@ func CreateLink(linksStore *storage.LinksStore) http.HandlerFunc {
 			return
 		}
 
-		newLink, err := linksStore.CreateLink(r.Context(), userID, createLinkReq)
-
+		newLink, err := linkService.CreateLink(r.Context(), userID, createLinkReq)
 		if err != nil {
-			if errors.Is(err, storage.ErrEmptyOriginalURL) {
+			if errors.Is(err, service.ErrInvalidOriginalURL) {
 				_ = helper.WriteJSONError(w, http.StatusBadRequest, "original_url is required")
 				return
 			}
+
+			log.Println("creating link:", err)
 			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
 			return
 		}

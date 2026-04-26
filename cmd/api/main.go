@@ -15,6 +15,7 @@ import (
 	"github.com/MrBorisT/url_shortener/internal/handler"
 	auth "github.com/MrBorisT/url_shortener/internal/jwt"
 	mw "github.com/MrBorisT/url_shortener/internal/middleware"
+	"github.com/MrBorisT/url_shortener/internal/service"
 	"github.com/MrBorisT/url_shortener/internal/storage"
 )
 
@@ -41,8 +42,9 @@ func main() {
 	userStore := storage.NewUserStore(pool)
 	authManager := auth.NewJWTManager(config)
 	linksStore := storage.NewLinksStore(pool)
+	linkService := service.NewLinkService(linksStore)
 
-	r := newRouter(userStore, authManager, linksStore)
+	r := newRouter(userStore, authManager, linksStore, linkService)
 
 	log.Println("started server on port", ":8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {
@@ -74,7 +76,11 @@ func newPool(config *config.Config) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-func newRouter(userStore *storage.UserStore, authManager *auth.JWTManager, linksStore *storage.LinksStore) http.Handler {
+func newRouter(
+	userStore *storage.UserStore,
+	authManager *auth.JWTManager,
+	linksStore *storage.LinksStore,
+	linkService *service.LinkService) http.Handler {
 	r := chi.NewRouter()
 
 	r.Get("/health", handler.Health)
@@ -84,7 +90,7 @@ func newRouter(userStore *storage.UserStore, authManager *auth.JWTManager, links
 
 		r.Route("/links", func(r chi.Router) {
 			r.Use(mw.AuthMiddleware(authManager))
-			r.Post("/", handler.CreateLink(linksStore))
+			r.Post("/", handler.CreateLink(linkService))
 			r.Get("/", handler.ListLinks(linksStore))
 			r.Get("/{id}", handler.GetLink(linksStore))
 			r.Patch("/{id}", handler.UpdateLink(linksStore))

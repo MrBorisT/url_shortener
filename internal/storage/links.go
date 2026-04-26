@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/MrBorisT/url_shortener/internal/models"
-	"github.com/MrBorisT/url_shortener/internal/shortcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -85,37 +83,27 @@ func (s *LinksStore) GetLink(ctx context.Context, userID string, linkID string) 
 	return &link, nil
 }
 
-func (s *LinksStore) CreateLink(ctx context.Context, userID string, linkReq models.CreateLinkRequest) (*models.Link, error) {
-	trimmedURL := strings.TrimSpace(linkReq.OriginalURL)
-	if trimmedURL == "" {
-		return nil, ErrEmptyOriginalURL
-	}
+func (s *LinksStore) CreateLink(ctx context.Context, link models.Link) (*models.Link, error) {
+	query := `
+		INSERT INTO links (original_url, user_id, short_code)
+		VALUES ($1, $2, $3)
+		RETURNING id, created_at, updated_at
+	`
 
-	sCode, err := shortcode.Generate()
-	if err != nil {
+	row := s.Pool.QueryRow(ctx, query, link.OriginalURL, link.UserID, link.ShortCode)
+
+	if err := row.Scan(&link.ID, &link.CreatedAt, &link.UpdatedAt); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) &&
+			pgErr.Code == PGCodeUniqueViolation &&
+			pgErr.ConstraintName == "links_short_code_key" {
+			return nil, ErrShortCodeTaken
+		}
+
 		return nil, fmt.Errorf("create link: %w", err)
 	}
 
-	newLink := models.Link{
-		OriginalURL: trimmedURL,
-		UserID:      userID,
-		ShortCode:   sCode,
-	}
-
-	query := "INSERT INTO links (original_url, user_id, short_code) VALUES ($1, $2, $3) RETURNING id, created_at, updated_at"
-	row := s.Pool.QueryRow(ctx, query, newLink.OriginalURL, newLink.UserID, newLink.ShortCode)
-
-	if err := row.Scan(&newLink.ID, &newLink.CreatedAt, &newLink.UpdatedAt); err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == PGCodeUniqueViolation {
-			//todo retry?
-			return nil, fmt.Errorf("creating link: %w", err)
-		} else {
-			return nil, fmt.Errorf("creating link: %w", err)
-		}
-	}
-
-	return &newLink, nil
+	return &link, nil
 }
 
 func (s *LinksStore) UpdateLink(ctx context.Context, userID string, linkID string, linkReq models.UpdateLinkRequest) (*models.Link, error) {

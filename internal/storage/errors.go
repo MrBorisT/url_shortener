@@ -8,8 +8,9 @@ var (
 	ErrInvalidCredentials = errors.New("invalid email or password")
 
 	//links
-	ErrLinkNotFound = errors.New("link not found")
+	ErrLinkNotFound     = errors.New("link not found")
 	ErrEmptyOriginalURL = errors.New("empty original URL")
+	ErrShortCodeTaken   = errors.New("short code already taken")
 )
 
 const (
