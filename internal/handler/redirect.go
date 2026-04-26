@@ -31,14 +31,6 @@ func Redirect(linksService *service.LinkService) http.HandlerFunc {
 			log.Println("incrementing click count:", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
-		http.Redirect(w, r, normalizeURL(originalURL), http.StatusFound)
+		http.Redirect(w, r, originalURL, http.StatusFound)
 	}
-}
-
-func normalizeURL(raw string) string {
-	if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") {
-		return raw
-	}
-
-	return "https://" + raw
 }
