@@ -7,14 +7,15 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
+
 	"github.com/MrBorisT/url_shortener/internal/config"
 	"github.com/MrBorisT/url_shortener/internal/handler"
 	auth "github.com/MrBorisT/url_shortener/internal/jwt"
 	mw "github.com/MrBorisT/url_shortener/internal/middleware"
 	"github.com/MrBorisT/url_shortener/internal/storage"
-	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/joho/godotenv"
 )
 
 func main() {
