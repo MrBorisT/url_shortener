@@ -85,6 +85,9 @@ func (s *LinksStore) GetLink(ctx context.Context, userID string, linkID string) 
 }
 
 func (s *LinksStore) CreateLink(ctx context.Context, link models.Link) (*models.Link, error) {
+	if link.OriginalURL == "" {
+		return nil, ErrEmptyOriginalURL
+	}
 	query := `
 		INSERT INTO links (original_url, user_id, short_code)
 		VALUES ($1, $2, $3)
@@ -108,7 +111,9 @@ func (s *LinksStore) CreateLink(ctx context.Context, link models.Link) (*models.
 }
 
 func (s *LinksStore) UpdateLink(ctx context.Context, userID string, linkID string, linkReq models.UpdateLinkRequest) (*models.Link, error) {
-	//todo validation
+	if linkID == "" {
+		return nil, ErrEmptyOriginalURL
+	}
 	query := `
 	UPDATE links
 	SET original_url = $1, updated_at = NOW()
@@ -137,6 +142,10 @@ func (s *LinksStore) UpdateLink(ctx context.Context, userID string, linkID strin
 }
 
 func (s *LinksStore) DeleteLink(ctx context.Context, userID string, linkID string) error {
+	if linkID == "" {
+		return ErrEmptyOriginalURL
+	}
+
 	query := `
 	DELETE FROM links
 	WHERE user_id = $1 AND id = $2
@@ -155,6 +164,9 @@ func (s *LinksStore) DeleteLink(ctx context.Context, userID string, linkID strin
 }
 
 func (s *LinksStore) DisableLink(ctx context.Context, userID string, linkID string) error {
+	if linkID == "" {
+		return ErrEmptyOriginalURL
+	}
 	query := `
 	UPDATE links
 	SET disabled_at = NOW()
