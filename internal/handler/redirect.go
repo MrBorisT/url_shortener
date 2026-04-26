@@ -15,13 +15,15 @@ func Redirect(linksStore *storage.LinksStore) http.HandlerFunc {
 		shortLink := strings.TrimSpace(chi.URLParam(r, "link"))
 		originalURL, err := linksStore.GetOriginalURL(r.Context(), shortLink)
 		if err != nil {
-			if errors.Is(err, storage.ErrLinkNotFound) {
+			switch {
+			case errors.Is(err, storage.ErrLinkNotFound):
 				http.NotFound(w, r)
-				return
+			case errors.Is(err, storage.ErrLinkDisabled):
+				http.Error(w, http.StatusText(http.StatusGone), http.StatusGone)
+			default:
+				log.Println("getting original URL:", err)
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
-
-			log.Println("getting original URL:", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 

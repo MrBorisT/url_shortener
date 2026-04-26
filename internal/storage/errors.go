@@ -11,6 +11,7 @@ var (
 	ErrLinkNotFound     = errors.New("link not found")
 	ErrEmptyOriginalURL = errors.New("empty original URL")
 	ErrShortCodeTaken   = errors.New("short code already taken")
+	ErrLinkDisabled     = errors.New("link is disabled")
 )
 
 const (

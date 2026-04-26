@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/MrBorisT/url_shortener/internal/models"
 	"github.com/jackc/pgx/v5"
@@ -174,17 +175,22 @@ func (s *LinksStore) DisableLink(ctx context.Context, userID string, linkID stri
 
 func (s *LinksStore) GetOriginalURL(ctx context.Context, shortLink string) (string, error) {
 	query := `
-	SELECT original_url FROM links
+	SELECT original_url, disabled_at FROM links
 	WHERE short_code = $1
 	`
 
 	var originalURL string
-	if err := s.Pool.QueryRow(ctx, query, shortLink).Scan(&originalURL); err != nil {
+	var disabledAt *time.Time
+	if err := s.Pool.QueryRow(ctx, query, shortLink).Scan(&originalURL, &disabledAt); err != nil {
 		if err == pgx.ErrNoRows {
 			return "", ErrLinkNotFound
 		} else {
 			return "", fmt.Errorf("get original URL: %w", err)
 		}
+	}
+
+	if disabledAt != nil {
+		return "", ErrLinkDisabled
 	}
 
 	return originalURL, nil
