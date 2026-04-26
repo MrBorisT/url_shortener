@@ -29,7 +29,7 @@ func Redirect(linksService *service.LinkService) http.HandlerFunc {
 		}
 		if err := linksService.IncrementClickCount(r.Context(), shortLink); err != nil {
 			log.Println("incrementing click count:", err)
-			return
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 		http.Redirect(w, r, normalizeURL(originalURL), http.StatusFound)
 	}
