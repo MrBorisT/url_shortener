@@ -11,7 +11,6 @@ import (
 	mw "github.com/MrBorisT/url_shortener/internal/middleware"
 	"github.com/MrBorisT/url_shortener/internal/models"
 	"github.com/MrBorisT/url_shortener/internal/service"
-	"github.com/MrBorisT/url_shortener/internal/storage"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -51,9 +50,10 @@ func GetLink(linksService *service.LinkService) http.HandlerFunc {
 		encoder := json.NewEncoder(w)
 
 		linkID := strings.TrimSpace(chi.URLParam(r, "id"))
+		
 		link, err := linksService.GetLink(r.Context(), userID, linkID)
 
-		if errors.Is(err, storage.ErrLinkNotFound) {
+		if errors.Is(err, service.ErrLinkNotFound) {
 			_ = helper.WriteJSONError(w, http.StatusNotFound, "link not found")
 			return
 		}

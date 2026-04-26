@@ -66,28 +66,55 @@ func (s *LinkService) UpdateLink(ctx context.Context, userID string, linkID stri
 		return nil, ErrEmptyLinkID
 	}
 
-	return s.LinksStore.UpdateLink(ctx, userID, linkID, req)
+	link, err := s.LinksStore.UpdateLink(ctx, userID, linkID, req)
+	if err != nil {
+		if errors.Is(err, storage.ErrLinkNotFound) {
+			return nil, ErrLinkNotFound
+		}
+		return nil, err
+	}
+	return link, nil
 }
 
 func (s *LinkService) DeleteLink(ctx context.Context, userID string, linkID string) error {
 	if linkID == "" {
 		return ErrEmptyLinkID
 	}
-	return s.LinksStore.DeleteLink(ctx, userID, linkID)
+
+	if err := s.LinksStore.DeleteLink(ctx, userID, linkID); err != nil {
+		if errors.Is(err, storage.ErrLinkNotFound) {
+			return ErrLinkNotFound
+		}
+		return err
+	}
+	return nil
 }
 
 func (s *LinkService) DisableLink(ctx context.Context, userID string, linkID string) error {
 	if linkID == "" {
 		return ErrEmptyLinkID
 	}
-	return s.LinksStore.DisableLink(ctx, userID, linkID)
+	if err := s.LinksStore.DisableLink(ctx, userID, linkID); err != nil {
+		if errors.Is(err, storage.ErrLinkNotFound) {
+			return ErrLinkNotFound
+		}
+		return err
+	}
+	return nil
 }
 
 func (s *LinkService) GetLink(ctx context.Context, userID string, linkID string) (*models.Link, error) {
 	if linkID == "" {
 		return nil, ErrEmptyLinkID
 	}
-	return s.LinksStore.GetLink(ctx, userID, linkID)
+	link, err := s.LinksStore.GetLink(ctx, userID, linkID)
+	if err != nil {
+		if errors.Is(err, storage.ErrLinkNotFound) {
+			return nil, ErrLinkNotFound
+		}
+		return nil, err
+	}
+	return link, nil
 }
 
 func (s *LinkService) GetOriginalURL(ctx context.Context, shortCode string) (string, error) {
