@@ -61,6 +61,7 @@ func GetLink(linksStore *storage.LinksStore) http.HandlerFunc {
 		if err != nil {
 			log.Println("getting link:", err)
 			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
+			return
 		}
 
 		if err := encoder.Encode(link); err != nil {
@@ -124,9 +125,9 @@ func DeleteLink(linksStore *storage.LinksStore) http.HandlerFunc {
 				return
 			}
 			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
-		} else {
-			w.WriteHeader(http.StatusNoContent)
+			return
 		}
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -143,9 +144,10 @@ func DisableLink(linksStore *storage.LinksStore) http.HandlerFunc {
 
 		if err := linksStore.DisableLink(r.Context(), userID, linkID); err != nil {
 			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
-		} else {
-			w.WriteHeader(http.StatusOK)
+			return
 		}
+
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
