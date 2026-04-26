@@ -202,9 +202,13 @@ func (s *LinksStore) IncrementClickCount(ctx context.Context, shortLink string) 
 	WHERE short_code = $1
 	`
 
-	_, err := s.Pool.Exec(ctx, query, shortLink)
+	tag, err := s.Pool.Exec(ctx, query, shortLink)
 	if err != nil {
 		return fmt.Errorf("increment click count: %w", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return ErrLinkNotFound
 	}
 
 	return nil

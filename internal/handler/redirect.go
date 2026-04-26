@@ -28,6 +28,10 @@ func Redirect(linksService *service.LinkService) http.HandlerFunc {
 			return
 		}
 		if err := linksService.IncrementClickCount(r.Context(), shortLink); err != nil {
+			if errors.Is(err, storage.ErrLinkNotFound) {
+				http.NotFound(w, r)
+				return
+			}
 			log.Println("incrementing click count:", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
