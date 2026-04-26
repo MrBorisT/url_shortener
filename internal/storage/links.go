@@ -23,8 +23,8 @@ func NewLinksStore(pool *pgxpool.Pool) *LinksStore {
 
 func (s *LinksStore) ListLinks(ctx context.Context, userID string) ([]models.Link, error) {
 	query := `
-	SELECT id, original_id, short_code, click_count, disabled_at, created_at, updated_at FROM links
-	WHERE user_id = %1
+	SELECT id, original_url, short_code, click_count, disabled_at, created_at, updated_at FROM links
+	WHERE user_id = $1
 	`
 
 	rows, err := s.Pool.Query(ctx, query, userID)
@@ -60,8 +60,8 @@ func (s *LinksStore) ListLinks(ctx context.Context, userID string) ([]models.Lin
 
 func (s *LinksStore) GetLink(ctx context.Context, userID string, linkID string) (*models.Link, error) {
 	query := `
-	SELECT id, original_id, short_code, click_count, disabled_at, created_at, updated_at FROM links
-	WHERE user_id = %1 AND id = %2
+	SELECT id, original_url, short_code, click_count, disabled_at, created_at, updated_at FROM links
+	WHERE user_id = $1 AND id = $2
 	`
 
 	rows, err := s.Pool.Query(ctx, query, userID, linkID)

@@ -46,7 +46,7 @@ func GetLink(linksStore *storage.LinksStore) http.HandlerFunc {
 
 		encoder := json.NewEncoder(w)
 
-		linkID := strings.TrimSpace(chi.URLParam(r, "linkID"))
+		linkID := strings.TrimSpace(chi.URLParam(r, "id"))
 		link, err := linksStore.GetLink(r.Context(), userID, linkID)
 
 		if err != nil {
