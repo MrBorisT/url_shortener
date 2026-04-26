@@ -97,7 +97,7 @@ func newRouter(userStore *storage.UserStore, authManager *auth.JWTManager, links
 		})
 	})
 
-	r.Get("/{link}", handler.Redirect)
+	r.Get("/{link}", handler.Redirect(linksStore))
 
 	return r
 }

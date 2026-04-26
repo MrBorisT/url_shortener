@@ -182,3 +182,21 @@ func (s *LinksStore) DisableLink(ctx context.Context, userID string, linkID stri
 
 	return nil
 }
+
+func (s *LinksStore) GetOriginalURL(ctx context.Context, shortLink string) (string, error) {
+	query := `
+	SELECT original_url FROM links
+	WHERE short_code = $1
+	`
+
+	var originalURL string
+	if err := s.Pool.QueryRow(ctx, query, shortLink).Scan(&originalURL); err != nil {
+		if err == pgx.ErrNoRows {
+			return "", ErrLinkNotFound
+		} else {
+			return "", fmt.Errorf("get original URL: %w", err)
+		}
+	}
+
+	return originalURL, nil
+}
