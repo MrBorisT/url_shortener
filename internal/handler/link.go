@@ -100,7 +100,7 @@ func DeleteLink(linksStore *storage.LinksStore) http.HandlerFunc {
 			return
 		}
 
-		linkID := strings.TrimSpace(chi.URLParam(r, "linkID"))
+		linkID := strings.TrimSpace(chi.URLParam(r, "id"))
 
 		if err := linksStore.DeleteLink(r.Context(), userID, linkID); err != nil {
 			_ = helper.WriteJSONError(w, http.StatusInternalServerError, "something went wrong, try again later")
@@ -119,7 +119,7 @@ func DisableLink(linksStore *storage.LinksStore) http.HandlerFunc {
 			return
 		}
 
-		linkID := strings.TrimSpace(chi.URLParam(r, "linkID"))
+		linkID := strings.TrimSpace(chi.URLParam(r, "id"))
 
 		if err := linksStore.DisableLink(r.Context(), userID, linkID); err != nil {
 			_ = helper.WriteJSONError(w, http.StatusInternalServerError, "something went wrong, try again later")
@@ -138,7 +138,7 @@ func UpdateLink(linksStore *storage.LinksStore) http.HandlerFunc {
 			return
 		}
 
-		linkID := strings.TrimSpace(chi.URLParam(r, "linkID"))
+		linkID := strings.TrimSpace(chi.URLParam(r, "id"))
 		updateLinkReq := models.UpdateLinkRequest{}
 
 		if err := json.NewDecoder(r.Body).Decode(&updateLinkReq); err != nil {
