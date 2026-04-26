@@ -126,13 +126,59 @@ func (s *LinksStore) CreateLink(ctx context.Context, userID string, linkReq mode
 }
 
 func (s *LinksStore) UpdateLink(ctx context.Context, userID string, linkID string, linkReq models.UpdateLinkRequest) (*models.Link, error) {
-	return nil, nil
+	//todo validation
+	query := `
+	UPDATE links
+	SET original_url = $1, updated_at = NOW()
+	WHERE user_id = $2 AND id = $3
+	RETURNING id, original_url, short_code, click_count, disabled_at, created_at, updated_at
+	`
+
+	updatedLink := models.Link{}
+	if err := s.Pool.QueryRow(ctx, query, linkReq.OriginalURL, userID, linkID).Scan(
+		&updatedLink.ID,
+		&updatedLink.OriginalURL,
+		&updatedLink.ShortCode,
+		&updatedLink.ClickCount,
+		&updatedLink.DisabledAt,
+		&updatedLink.CreatedAt,
+		&updatedLink.UpdatedAt,
+	); err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, ErrLinkNotFound
+		} else {
+			return nil, fmt.Errorf("update link: %w", err)
+		}
+	}
+
+	return &updatedLink, nil
 }
 
 func (s *LinksStore) DeleteLink(ctx context.Context, userID string, linkID string) error {
+	query := `
+	DELETE FROM links
+	WHERE user_id = $1 AND id = $2
+	`
+
+	_, err := s.Pool.Exec(ctx, query, userID, linkID)
+	if err != nil {
+		return fmt.Errorf("delete link: %w", err)
+	}
+
 	return nil
 }
 
 func (s *LinksStore) DisableLink(ctx context.Context, userID string, linkID string) error {
+	query := `
+	UPDATE links
+	SET disabled_at = NOW()
+	WHERE user_id = $1 AND id = $2
+	`
+
+	_, err := s.Pool.Exec(ctx, query, userID, linkID)
+	if err != nil {
+		return fmt.Errorf("disable link: %w", err)
+	}
+
 	return nil
 }
