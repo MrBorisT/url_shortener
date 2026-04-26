@@ -120,11 +120,14 @@ func DeleteLink(linksStore *storage.LinksStore) http.HandlerFunc {
 		linkID := strings.TrimSpace(chi.URLParam(r, "id"))
 
 		if err := linksStore.DeleteLink(r.Context(), userID, linkID); err != nil {
-			if errors.Is(err, storage.ErrEmptyOriginalURL) {
+			switch {
+			case errors.Is(err, storage.ErrEmptyOriginalURL):
 				_ = helper.WriteJSONError(w, http.StatusBadRequest, "original_url is required")
-				return
+			case errors.Is(err, storage.ErrLinkNotFound):
+				_ = helper.WriteJSONError(w, http.StatusNotFound, "link not found")
+			default:
+				_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
 			}
-			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
@@ -143,8 +146,16 @@ func DisableLink(linksStore *storage.LinksStore) http.HandlerFunc {
 		linkID := strings.TrimSpace(chi.URLParam(r, "id"))
 
 		if err := linksStore.DisableLink(r.Context(), userID, linkID); err != nil {
-			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
-			return
+			switch {
+			case errors.Is(err, storage.ErrEmptyOriginalURL):
+				_ = helper.WriteJSONError(w, http.StatusBadRequest, "original_url is required")
+			case errors.Is(err, storage.ErrLinkNotFound):
+				_ = helper.WriteJSONError(w, http.StatusNotFound, "link not found")
+			default:
+				log.Println("disabling link:", err)
+				_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
+				return
+			}
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -170,7 +181,15 @@ func UpdateLink(linksStore *storage.LinksStore) http.HandlerFunc {
 
 		newLink, err := linksStore.UpdateLink(r.Context(), userID, linkID, updateLinkReq)
 		if err != nil {
-			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
+			switch {
+			case errors.Is(err, storage.ErrEmptyOriginalURL):
+				_ = helper.WriteJSONError(w, http.StatusBadRequest, "original_url is required")
+			case errors.Is(err, storage.ErrLinkNotFound):
+				_ = helper.WriteJSONError(w, http.StatusNotFound, "link not found")
+			default:
+				log.Println("updating link:", err)
+				_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
+			}
 			return
 		}
 
