@@ -26,7 +26,10 @@ func Redirect(linksStore *storage.LinksStore) http.HandlerFunc {
 			}
 			return
 		}
-
+		if err := linksStore.IncrementClickCount(r.Context(), shortLink); err != nil {
+			log.Println("incrementing click count:", err)
+			return
+		}
 		http.Redirect(w, r, normalizeURL(originalURL), http.StatusFound)
 	}
 }

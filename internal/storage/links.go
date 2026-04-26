@@ -195,3 +195,18 @@ func (s *LinksStore) GetOriginalURL(ctx context.Context, shortLink string) (stri
 
 	return originalURL, nil
 }
+
+func (s *LinksStore) IncrementClickCount(ctx context.Context, shortLink string) error {
+	query := `
+	UPDATE links
+	SET click_count = click_count + 1, updated_at = NOW()
+	WHERE short_code = $1
+	`
+
+	_, err := s.Pool.Exec(ctx, query, shortLink)
+	if err != nil {
+		return fmt.Errorf("increment click count: %w", err)
+	}
+
+	return nil
+}
