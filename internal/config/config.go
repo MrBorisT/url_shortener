@@ -31,6 +31,13 @@ func LoadConfig() (*Config, error) {
 		JWTSecret:  os.Getenv("JWT_SECRET"),
 	}
 	jwt_ttl_str := os.Getenv("JWT_TTL")
+	if jwt_ttl_str == "" {
+		jwt_ttl_str = "24h"
+	}
+
+	if cfg.JWTSecret == "" {
+		return nil, fmt.Errorf("missing required JWT_SECRET environment variable")
+	}
 
 	cfg.JWTTTL = parseDuration(jwt_ttl_str)
 
