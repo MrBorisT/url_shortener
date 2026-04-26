@@ -43,8 +43,9 @@ func main() {
 	authManager := auth.NewJWTManager(config)
 	linksStore := storage.NewLinksStore(pool)
 	linkService := service.NewLinkService(linksStore)
+	authService := service.NewAuthService(userStore, authManager)
 
-	r := newRouter(userStore, authManager, linksStore, linkService)
+	r := newRouter(userStore, authManager, linksStore, linkService, authService)
 
 	log.Println("started server on port", config.Port)
 	if err := http.ListenAndServe(config.Port, r); err != nil {
@@ -80,7 +81,8 @@ func newRouter(
 	userStore *storage.UserStore,
 	authManager *auth.JWTManager,
 	linksStore *storage.LinksStore,
-	linkService *service.LinkService) http.Handler {
+	linkService *service.LinkService,
+	authService *service.AuthService) http.Handler {
 	r := chi.NewRouter()
 
 	r.Get("/health", handler.Health)
@@ -99,8 +101,8 @@ func newRouter(
 		})
 
 		r.Route("/auth", func(r chi.Router) {
-			r.Post("/register", handler.Register(userStore))
-			r.Post("/login", handler.Login(userStore, authManager))
+			r.Post("/register", handler.Register(authService))
+			r.Post("/login", handler.Login(authService))
 		})
 	})
 
