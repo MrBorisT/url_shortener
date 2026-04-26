@@ -50,7 +50,7 @@ func GetLink(linksService *service.LinkService) http.HandlerFunc {
 		encoder := json.NewEncoder(w)
 
 		linkID := strings.TrimSpace(chi.URLParam(r, "id"))
-		
+
 		link, err := linksService.GetLink(r.Context(), userID, linkID)
 
 		if errors.Is(err, service.ErrLinkNotFound) {
@@ -153,8 +153,8 @@ func DisableLink(linkService *service.LinkService) http.HandlerFunc {
 			default:
 				log.Println("disabling link:", err)
 				_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
-				return
 			}
+			return
 		}
 
 		w.WriteHeader(http.StatusOK)
