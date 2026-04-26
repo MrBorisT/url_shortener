@@ -6,14 +6,15 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MrBorisT/url_shortener/internal/service"
 	"github.com/MrBorisT/url_shortener/internal/storage"
 	"github.com/go-chi/chi/v5"
 )
 
-func Redirect(linksStore *storage.LinksStore) http.HandlerFunc {
+func Redirect(linksService *service.LinkService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		shortLink := strings.TrimSpace(chi.URLParam(r, "link"))
-		originalURL, err := linksStore.GetOriginalURL(r.Context(), shortLink)
+		originalURL, err := linksService.GetOriginalURL(r.Context(), shortLink)
 		if err != nil {
 			switch {
 			case errors.Is(err, storage.ErrLinkNotFound):
@@ -26,7 +27,7 @@ func Redirect(linksStore *storage.LinksStore) http.HandlerFunc {
 			}
 			return
 		}
-		if err := linksStore.IncrementClickCount(r.Context(), shortLink); err != nil {
+		if err := linksService.IncrementClickCount(r.Context(), shortLink); err != nil {
 			log.Println("incrementing click count:", err)
 			return
 		}

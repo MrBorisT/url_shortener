@@ -53,3 +53,49 @@ func (s *LinkService) CreateLink(ctx context.Context, userID string, req models.
 
 	return nil, ErrCouldNotGenerateShortCode
 }
+
+func (s *LinkService) UpdateLink(ctx context.Context, userID string, linkID string, req models.UpdateLinkRequest) (*models.Link, error) {
+	originalURL := strings.TrimSpace(req.OriginalURL)
+	if originalURL == "" {
+		return nil, ErrInvalidOriginalURL
+	}
+
+	if linkID == "" {
+		return nil, ErrEmptyLinkID
+	}
+
+	return s.LinksStore.UpdateLink(ctx, userID, linkID, req)
+}
+
+func (s *LinkService) DeleteLink(ctx context.Context, userID string, linkID string) error {
+	if linkID == "" {
+		return ErrEmptyLinkID
+	}
+	return s.LinksStore.DeleteLink(ctx, userID, linkID)
+}
+
+func (s *LinkService) DisableLink(ctx context.Context, userID string, linkID string) error {
+	if linkID == "" {
+		return ErrEmptyLinkID
+	}
+	return s.LinksStore.DisableLink(ctx, userID, linkID)
+}
+
+func (s *LinkService) GetLink(ctx context.Context, userID string, linkID string) (*models.Link, error) {
+	if linkID == "" {
+		return nil, ErrEmptyLinkID
+	}
+	return s.LinksStore.GetLink(ctx, userID, linkID)
+}
+
+func (s *LinkService) GetOriginalURL(ctx context.Context, shortCode string) (string, error) {
+	return s.LinksStore.GetOriginalURL(ctx, shortCode)
+}
+
+func (s *LinkService) IncrementClickCount(ctx context.Context, shortCode string) error {
+	return s.LinksStore.IncrementClickCount(ctx, shortCode)
+}
+
+func (s *LinkService) ListLinks(ctx context.Context, userID string) ([]models.Link, error) {
+	return s.LinksStore.ListLinks(ctx, userID)
+}

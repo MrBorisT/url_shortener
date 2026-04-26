@@ -15,7 +15,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func ListLinks(linksStore *storage.LinksStore) http.HandlerFunc {
+func ListLinks(linksService *service.LinkService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := mw.GetUserID(r.Context())
 		if !ok {
@@ -26,7 +26,7 @@ func ListLinks(linksStore *storage.LinksStore) http.HandlerFunc {
 
 		encoder := json.NewEncoder(w)
 
-		links, err := linksStore.ListLinks(r.Context(), userID)
+		links, err := linksService.ListLinks(r.Context(), userID)
 		if err != nil {
 			log.Println("listing links:", err)
 			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
@@ -39,7 +39,7 @@ func ListLinks(linksStore *storage.LinksStore) http.HandlerFunc {
 	}
 }
 
-func GetLink(linksStore *storage.LinksStore) http.HandlerFunc {
+func GetLink(linksService *service.LinkService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := mw.GetUserID(r.Context())
 		if !ok {
@@ -51,7 +51,7 @@ func GetLink(linksStore *storage.LinksStore) http.HandlerFunc {
 		encoder := json.NewEncoder(w)
 
 		linkID := strings.TrimSpace(chi.URLParam(r, "id"))
-		link, err := linksStore.GetLink(r.Context(), userID, linkID)
+		link, err := linksService.GetLink(r.Context(), userID, linkID)
 
 		if errors.Is(err, storage.ErrLinkNotFound) {
 			_ = helper.WriteJSONError(w, http.StatusNotFound, "link not found")
@@ -108,7 +108,7 @@ func CreateLink(linkService *service.LinkService) http.HandlerFunc {
 	}
 }
 
-func DeleteLink(linksStore *storage.LinksStore) http.HandlerFunc {
+func DeleteLink(linkService *service.LinkService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := mw.GetUserID(r.Context())
 		if !ok {
@@ -119,11 +119,11 @@ func DeleteLink(linksStore *storage.LinksStore) http.HandlerFunc {
 
 		linkID := strings.TrimSpace(chi.URLParam(r, "id"))
 
-		if err := linksStore.DeleteLink(r.Context(), userID, linkID); err != nil {
+		if err := linkService.DeleteLink(r.Context(), userID, linkID); err != nil {
 			switch {
-			case errors.Is(err, storage.ErrEmptyOriginalURL):
-				_ = helper.WriteJSONError(w, http.StatusBadRequest, "original_url is required")
-			case errors.Is(err, storage.ErrLinkNotFound):
+			case errors.Is(err, service.ErrEmptyLinkID):
+				_ = helper.WriteJSONError(w, http.StatusBadRequest, "link id is required")
+			case errors.Is(err, service.ErrLinkNotFound):
 				_ = helper.WriteJSONError(w, http.StatusNotFound, "link not found")
 			default:
 				_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
@@ -134,7 +134,7 @@ func DeleteLink(linksStore *storage.LinksStore) http.HandlerFunc {
 	}
 }
 
-func DisableLink(linksStore *storage.LinksStore) http.HandlerFunc {
+func DisableLink(linkService *service.LinkService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := mw.GetUserID(r.Context())
 		if !ok {
@@ -145,11 +145,11 @@ func DisableLink(linksStore *storage.LinksStore) http.HandlerFunc {
 
 		linkID := strings.TrimSpace(chi.URLParam(r, "id"))
 
-		if err := linksStore.DisableLink(r.Context(), userID, linkID); err != nil {
+		if err := linkService.DisableLink(r.Context(), userID, linkID); err != nil {
 			switch {
-			case errors.Is(err, storage.ErrEmptyOriginalURL):
-				_ = helper.WriteJSONError(w, http.StatusBadRequest, "original_url is required")
-			case errors.Is(err, storage.ErrLinkNotFound):
+			case errors.Is(err, service.ErrEmptyLinkID):
+				_ = helper.WriteJSONError(w, http.StatusBadRequest, "link id is required")
+			case errors.Is(err, service.ErrLinkNotFound):
 				_ = helper.WriteJSONError(w, http.StatusNotFound, "link not found")
 			default:
 				log.Println("disabling link:", err)
@@ -162,7 +162,7 @@ func DisableLink(linksStore *storage.LinksStore) http.HandlerFunc {
 	}
 }
 
-func UpdateLink(linksStore *storage.LinksStore) http.HandlerFunc {
+func UpdateLink(linkService *service.LinkService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := mw.GetUserID(r.Context())
 		if !ok {
@@ -179,12 +179,12 @@ func UpdateLink(linksStore *storage.LinksStore) http.HandlerFunc {
 			return
 		}
 
-		newLink, err := linksStore.UpdateLink(r.Context(), userID, linkID, updateLinkReq)
+		newLink, err := linkService.UpdateLink(r.Context(), userID, linkID, updateLinkReq)
 		if err != nil {
 			switch {
-			case errors.Is(err, storage.ErrEmptyOriginalURL):
+			case errors.Is(err, service.ErrEmptyOriginalURL):
 				_ = helper.WriteJSONError(w, http.StatusBadRequest, "original_url is required")
-			case errors.Is(err, storage.ErrLinkNotFound):
+			case errors.Is(err, service.ErrLinkNotFound):
 				_ = helper.WriteJSONError(w, http.StatusNotFound, "link not found")
 			default:
 				log.Println("updating link:", err)

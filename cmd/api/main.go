@@ -91,11 +91,11 @@ func newRouter(
 		r.Route("/links", func(r chi.Router) {
 			r.Use(mw.AuthMiddleware(authManager))
 			r.Post("/", handler.CreateLink(linkService))
-			r.Get("/", handler.ListLinks(linksStore))
-			r.Get("/{id}", handler.GetLink(linksStore))
-			r.Patch("/{id}", handler.UpdateLink(linksStore))
-			r.Delete("/{id}", handler.DeleteLink(linksStore))
-			r.Post("/{id}/disable", handler.DisableLink(linksStore))
+			r.Get("/", handler.ListLinks(linkService))
+			r.Get("/{id}", handler.GetLink(linkService))
+			r.Patch("/{id}", handler.UpdateLink(linkService))
+			r.Delete("/{id}", handler.DeleteLink(linkService))
+			r.Post("/{id}/disable", handler.DisableLink(linkService))
 		})
 
 		r.Route("/auth", func(r chi.Router) {
@@ -104,7 +104,7 @@ func newRouter(
 		})
 	})
 
-	r.Get("/{link}", handler.Redirect(linksStore))
+	r.Get("/{link}", handler.Redirect(linkService))
 
 	return r
 }
