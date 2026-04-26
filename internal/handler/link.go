@@ -90,8 +90,7 @@ func CreateLink(linkService *service.LinkService) http.HandlerFunc {
 
 		newLink, err := linkService.CreateLink(r.Context(), userID, createLinkReq)
 		if err != nil {
-			if errors.Is(err, service.ErrInvalidOriginalURL) {
-				_ = helper.WriteJSONError(w, http.StatusBadRequest, "original_url is required")
+			if helper.WriteValidationError(w, err) {
 				return
 			}
 
@@ -181,9 +180,10 @@ func UpdateLink(linkService *service.LinkService) http.HandlerFunc {
 
 		newLink, err := linkService.UpdateLink(r.Context(), userID, linkID, updateLinkReq)
 		if err != nil {
+			if helper.WriteValidationError(w, err) {
+				return
+			}
 			switch {
-			case errors.Is(err, service.ErrEmptyOriginalURL):
-				_ = helper.WriteJSONError(w, http.StatusBadRequest, "original_url is required")
 			case errors.Is(err, service.ErrLinkNotFound):
 				_ = helper.WriteJSONError(w, http.StatusNotFound, "link not found")
 			default:

@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/MrBorisT/url_shortener/internal/models"
 	"github.com/MrBorisT/url_shortener/internal/shortcode"
 	"github.com/MrBorisT/url_shortener/internal/storage"
+	"github.com/MrBorisT/url_shortener/internal/validation"
 )
 
 const maxShortCodeRetries = 5
@@ -22,9 +22,9 @@ func NewLinkService(linksStore *storage.LinksStore) *LinkService {
 }
 
 func (s *LinkService) CreateLink(ctx context.Context, userID string, req models.CreateLinkRequest) (*models.Link, error) {
-	originalURL := strings.TrimSpace(req.OriginalURL)
-	if originalURL == "" {
-		return nil, ErrInvalidOriginalURL
+	originalURL, err := validation.NormalizeURL(req.OriginalURL)
+	if err != nil {
+		return nil, err
 	}
 
 	for attempt := 0; attempt < maxShortCodeRetries; attempt++ {
@@ -55,10 +55,12 @@ func (s *LinkService) CreateLink(ctx context.Context, userID string, req models.
 }
 
 func (s *LinkService) UpdateLink(ctx context.Context, userID string, linkID string, req models.UpdateLinkRequest) (*models.Link, error) {
-	originalURL := strings.TrimSpace(req.OriginalURL)
-	if originalURL == "" {
-		return nil, ErrInvalidOriginalURL
+	originalURL, err := validation.NormalizeURL(req.OriginalURL)
+	if err != nil {
+		return nil, err
 	}
+
+	req.OriginalURL = originalURL
 
 	if linkID == "" {
 		return nil, ErrEmptyLinkID
