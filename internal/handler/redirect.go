@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"strings"
@@ -14,10 +15,16 @@ func Redirect(linksStore *storage.LinksStore) http.HandlerFunc {
 		shortLink := strings.TrimSpace(chi.URLParam(r, "link"))
 		originalURL, err := linksStore.GetOriginalURL(r.Context(), shortLink)
 		if err != nil {
-			http.NotFound(w, r)
-			log.Printf("getting original URL for short link %s: %v\n", shortLink, err)
+			if errors.Is(err, storage.ErrLinkNotFound) {
+				http.NotFound(w, r)
+				return
+			}
+
+			log.Println("getting original URL:", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
+
 		http.Redirect(w, r, normalizeURL(originalURL), http.StatusFound)
 	}
 }

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"strings"
@@ -18,7 +19,7 @@ func ListLinks(linksStore *storage.LinksStore) http.HandlerFunc {
 		userID, ok := mw.GetUserID(r.Context())
 		if !ok {
 			log.Println("user ID not found")
-			_ = helper.WriteJSONError(w, http.StatusInternalServerError, "something went wrong, try again later")
+			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
 			return
 		}
 
@@ -27,6 +28,8 @@ func ListLinks(linksStore *storage.LinksStore) http.HandlerFunc {
 		links, err := linksStore.ListLinks(r.Context(), userID)
 		if err != nil {
 			log.Println("listing links:", err)
+			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
+			return
 		}
 
 		if err := encoder.Encode(links); err != nil {
@@ -40,7 +43,7 @@ func GetLink(linksStore *storage.LinksStore) http.HandlerFunc {
 		userID, ok := mw.GetUserID(r.Context())
 		if !ok {
 			log.Println("user ID not found")
-			_ = helper.WriteJSONError(w, http.StatusInternalServerError, "something went wrong, try again later")
+			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
 			return
 		}
 
@@ -49,8 +52,14 @@ func GetLink(linksStore *storage.LinksStore) http.HandlerFunc {
 		linkID := strings.TrimSpace(chi.URLParam(r, "id"))
 		link, err := linksStore.GetLink(r.Context(), userID, linkID)
 
+		if errors.Is(err, storage.ErrLinkNotFound) {
+			_ = helper.WriteJSONError(w, http.StatusNotFound, "link not found")
+			return
+		}
+
 		if err != nil {
 			log.Println("getting link:", err)
+			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
 		}
 
 		if err := encoder.Encode(link); err != nil {
@@ -64,7 +73,7 @@ func CreateLink(linksStore *storage.LinksStore) http.HandlerFunc {
 		userID, ok := mw.GetUserID(r.Context())
 		if !ok {
 			log.Println("user ID not found")
-			_ = helper.WriteJSONError(w, http.StatusInternalServerError, "something went wrong, try again later")
+			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
 			return
 		}
 
@@ -78,8 +87,13 @@ func CreateLink(linksStore *storage.LinksStore) http.HandlerFunc {
 		}
 
 		newLink, err := linksStore.CreateLink(r.Context(), userID, createLinkReq)
+
 		if err != nil {
-			_ = helper.WriteJSONError(w, http.StatusInternalServerError, "something went wrong, try again later")
+			if errors.Is(err, storage.ErrEmptyOriginalURL) {
+				_ = helper.WriteJSONError(w, http.StatusBadRequest, "original_url is required")
+				return
+			}
+			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
 			return
 		}
 
@@ -96,14 +110,18 @@ func DeleteLink(linksStore *storage.LinksStore) http.HandlerFunc {
 		userID, ok := mw.GetUserID(r.Context())
 		if !ok {
 			log.Println("user ID not found")
-			_ = helper.WriteJSONError(w, http.StatusInternalServerError, "something went wrong, try again later")
+			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
 			return
 		}
 
 		linkID := strings.TrimSpace(chi.URLParam(r, "id"))
 
 		if err := linksStore.DeleteLink(r.Context(), userID, linkID); err != nil {
-			_ = helper.WriteJSONError(w, http.StatusInternalServerError, "something went wrong, try again later")
+			if errors.Is(err, storage.ErrEmptyOriginalURL) {
+				_ = helper.WriteJSONError(w, http.StatusBadRequest, "original_url is required")
+				return
+			}
+			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
 		} else {
 			w.WriteHeader(http.StatusNoContent)
 		}
@@ -115,14 +133,14 @@ func DisableLink(linksStore *storage.LinksStore) http.HandlerFunc {
 		userID, ok := mw.GetUserID(r.Context())
 		if !ok {
 			log.Println("user ID not found")
-			_ = helper.WriteJSONError(w, http.StatusInternalServerError, "something went wrong, try again later")
+			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
 			return
 		}
 
 		linkID := strings.TrimSpace(chi.URLParam(r, "id"))
 
 		if err := linksStore.DisableLink(r.Context(), userID, linkID); err != nil {
-			_ = helper.WriteJSONError(w, http.StatusInternalServerError, "something went wrong, try again later")
+			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
 		} else {
 			w.WriteHeader(http.StatusOK)
 		}
@@ -134,7 +152,7 @@ func UpdateLink(linksStore *storage.LinksStore) http.HandlerFunc {
 		userID, ok := mw.GetUserID(r.Context())
 		if !ok {
 			log.Println("user ID not found")
-			_ = helper.WriteJSONError(w, http.StatusInternalServerError, "something went wrong, try again later")
+			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
 			return
 		}
 
@@ -148,13 +166,14 @@ func UpdateLink(linksStore *storage.LinksStore) http.HandlerFunc {
 
 		newLink, err := linksStore.UpdateLink(r.Context(), userID, linkID, updateLinkReq)
 		if err != nil {
-			_ = helper.WriteJSONError(w, http.StatusInternalServerError, "something went wrong, try again later")
+			_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
+			return
 		}
 
 		if newLink != nil {
 			if err := json.NewEncoder(w).Encode(newLink); err != nil {
 				log.Println("encoding updated link:", err)
-				_ = helper.WriteJSONError(w, http.StatusInternalServerError, "something went wrong, try again later")
+				_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
 			}
 		}
 	}

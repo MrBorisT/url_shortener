@@ -64,13 +64,6 @@ func (s *LinksStore) GetLink(ctx context.Context, userID string, linkID string) 
 	WHERE user_id = $1 AND id = $2
 	`
 
-	rows, err := s.Pool.Query(ctx, query, userID, linkID)
-
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
 	link := models.Link{}
 
 	if err := s.Pool.QueryRow(ctx, query, userID, linkID).Scan(
@@ -160,9 +153,13 @@ func (s *LinksStore) DeleteLink(ctx context.Context, userID string, linkID strin
 	WHERE user_id = $1 AND id = $2
 	`
 
-	_, err := s.Pool.Exec(ctx, query, userID, linkID)
+	tag, err := s.Pool.Exec(ctx, query, userID, linkID)
 	if err != nil {
 		return fmt.Errorf("delete link: %w", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return ErrLinkNotFound
 	}
 
 	return nil
@@ -175,9 +172,13 @@ func (s *LinksStore) DisableLink(ctx context.Context, userID string, linkID stri
 	WHERE user_id = $1 AND id = $2
 	`
 
-	_, err := s.Pool.Exec(ctx, query, userID, linkID)
+	tag, err := s.Pool.Exec(ctx, query, userID, linkID)
 	if err != nil {
 		return fmt.Errorf("disable link: %w", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return ErrLinkNotFound
 	}
 
 	return nil
