@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"strings"
 
@@ -14,8 +15,17 @@ func Redirect(linksStore *storage.LinksStore) http.HandlerFunc {
 		originalURL, err := linksStore.GetOriginalURL(r.Context(), shortLink)
 		if err != nil {
 			http.NotFound(w, r)
+			log.Printf("getting original URL for short link %s: %v\n", shortLink, err)
 			return
 		}
-		http.Redirect(w, r, originalURL, http.StatusMovedPermanently)
+		http.Redirect(w, r, normalizeURL(originalURL), http.StatusFound)
 	}
+}
+
+func normalizeURL(raw string) string {
+	if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") {
+		return raw
+	}
+
+	return "https://" + raw
 }
