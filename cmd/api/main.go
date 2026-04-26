@@ -46,8 +46,8 @@ func main() {
 
 	r := newRouter(userStore, authManager, linksStore, linkService)
 
-	log.Println("started server on port", ":8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	log.Println("started server on port", config.Port)
+	if err := http.ListenAndServe(config.Port, r); err != nil {
 		log.Fatalln(err)
 	}
 }
