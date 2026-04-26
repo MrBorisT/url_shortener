@@ -8,6 +8,7 @@ import (
 	auth "github.com/MrBorisT/url_shortener/internal/jwt"
 	"github.com/MrBorisT/url_shortener/internal/models"
 	"github.com/MrBorisT/url_shortener/internal/storage"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type AuthService struct {
@@ -68,4 +69,8 @@ func verifyUserRequest(userRequest *models.UserRequest) error {
 	userRequest.Password = trimmedPassword
 
 	return nil
+}
+
+func (s *AuthService) Verify(tokenString string) (*jwt.RegisteredClaims, error) {
+	return s.JWTManager.Verify(tokenString)
 }

@@ -45,7 +45,7 @@ func main() {
 	linkService := service.NewLinkService(linksStore)
 	authService := service.NewAuthService(userStore, authManager)
 
-	r := newRouter(userStore, authManager, linksStore, linkService, authService)
+	r := newRouter(linkService, authService)
 
 	log.Println("started server on port", config.Port)
 	if err := http.ListenAndServe(config.Port, r); err != nil {
@@ -78,9 +78,6 @@ func newPool(config *config.Config) (*pgxpool.Pool, error) {
 }
 
 func newRouter(
-	userStore *storage.UserStore,
-	authManager *auth.JWTManager,
-	linksStore *storage.LinksStore,
 	linkService *service.LinkService,
 	authService *service.AuthService) http.Handler {
 	r := chi.NewRouter()
@@ -91,7 +88,7 @@ func newRouter(
 		r.Use(mw.JSONMiddleware)
 
 		r.Route("/links", func(r chi.Router) {
-			r.Use(mw.AuthMiddleware(authManager))
+			r.Use(mw.AuthMiddleware(authService))
 			r.Post("/", handler.CreateLink(linkService))
 			r.Get("/", handler.ListLinks(linkService))
 			r.Get("/{id}", handler.GetLink(linkService))

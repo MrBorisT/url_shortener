@@ -6,14 +6,14 @@ import (
 	"strings"
 
 	"github.com/MrBorisT/url_shortener/internal/helper"
-	auth "github.com/MrBorisT/url_shortener/internal/jwt"
+	"github.com/MrBorisT/url_shortener/internal/service"
 )
 
 type contextKey string
 
 const UserIDKey contextKey = "user_id"
 
-func AuthMiddleware(jwtManager *auth.JWTManager) func(http.Handler) http.Handler {
+func AuthMiddleware(authService *service.AuthService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -35,7 +35,7 @@ func AuthMiddleware(jwtManager *auth.JWTManager) func(http.Handler) http.Handler
 				return
 			}
 
-			claims, err := jwtManager.Verify(tokenString)
+			claims, err := authService.Verify(tokenString)
 			if err != nil {
 				_ = helper.WriteJSONError(w, http.StatusUnauthorized, "invalid token")
 				return
