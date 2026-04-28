@@ -26,6 +26,7 @@ func (s *PostgresLinksStore) ListLinks(ctx context.Context, userID uuid.UUID) ([
 	query := `
 	SELECT id, original_url, short_code, click_count, disabled_at, created_at, updated_at FROM links
 	WHERE user_id = $1
+	ORDER BY created_at DESC
 	`
 
 	rows, err := s.Pool.Query(ctx, query, userID)
