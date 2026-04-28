@@ -56,16 +56,16 @@ func (s *LinkService) CreateLink(ctx context.Context, userID uuid.UUID, req mode
 }
 
 func (s *LinkService) UpdateLink(ctx context.Context, userID uuid.UUID, linkID string, req models.UpdateLinkRequest) (*models.Link, error) {
+	if linkID == "" {
+		return nil, ErrEmptyLinkID
+	}
+
 	originalURL, err := validation.NormalizeURL(req.OriginalURL)
 	if err != nil {
 		return nil, err
 	}
 
 	req.OriginalURL = originalURL
-
-	if linkID == "" {
-		return nil, ErrEmptyLinkID
-	}
 
 	link, err := s.LinksStore.UpdateLink(ctx, userID, linkID, req)
 	if err != nil {
