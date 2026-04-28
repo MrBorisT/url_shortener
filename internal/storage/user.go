@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/MrBorisT/url_shortener/internal/autherr"
 	"github.com/MrBorisT/url_shortener/internal/models"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -35,7 +36,7 @@ func (s *UserStore) RegisterUser(ctx context.Context, userRequest models.UserReq
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == PGCodeUniqueViolation {
-			return ErrUserAlreadyExists
+			return autherr.ErrUserAlreadyExists
 		}
 		return fmt.Errorf("create user: %w", err)
 	}
@@ -50,12 +51,12 @@ func (s *UserStore) GetUserID(ctx context.Context, userRequest models.UserReques
 	var userID string
 	if err := row.Scan(&userID, &hashedPassword); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", ErrInvalidCredentials
+			return "", autherr.ErrInvalidCredentials
 		}
 		return "", fmt.Errorf("querying user: %w", err)
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(userRequest.Password)); err != nil {
-		return "", ErrInvalidCredentials
+		return "", autherr.ErrInvalidCredentials
 	}
 
 	return userID, nil

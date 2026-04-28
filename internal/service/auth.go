@@ -5,6 +5,7 @@ import (
 	"net/mail"
 	"strings"
 
+	"github.com/MrBorisT/url_shortener/internal/autherr"
 	auth "github.com/MrBorisT/url_shortener/internal/jwt"
 	"github.com/MrBorisT/url_shortener/internal/models"
 	"github.com/MrBorisT/url_shortener/internal/storage"
@@ -25,8 +26,8 @@ func (s *AuthService) RegisterUser(ctx context.Context, userRequest models.UserR
 		return err
 	}
 	if err := s.AuthStore.RegisterUser(ctx, userRequest); err != nil {
-		if err == storage.ErrUserAlreadyExists {
-			return ErrUserAlreadyExists
+		if err == autherr.ErrUserAlreadyExists {
+			return autherr.ErrUserAlreadyExists
 		}
 		return err
 	}
@@ -51,21 +52,21 @@ func (s *AuthService) GenerateJWT(userID string) (string, error) {
 func verifyUserRequest(userRequest *models.UserRequest) error {
 	trimmedEmail := strings.TrimSpace(userRequest.Email)
 	if trimmedEmail == "" {
-		return ErrEmptyUserEmail
+		return autherr.ErrEmptyUserEmail
 	}
 	if _, err := mail.ParseAddress(trimmedEmail); err != nil {
-		return ErrIncorrectUserEmail
+		return autherr.ErrIncorrectUserEmail
 	}
 
 	trimmedPassword := strings.TrimSpace(userRequest.Password)
 	if trimmedPassword == "" {
-		return ErrEmptyUserPassword
+		return autherr.ErrEmptyUserPassword
 	}
 	if len(trimmedPassword) < 6 {
-		return ErrShortUserPassword
+		return autherr.ErrShortUserPassword
 	}
 	if len(trimmedPassword) > 72 {
-		return ErrLongUserPassword
+		return autherr.ErrLongUserPassword
 	}
 
 	userRequest.Email = trimmedEmail

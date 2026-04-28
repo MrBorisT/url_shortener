@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/MrBorisT/url_shortener/internal/autherr"
 	"github.com/MrBorisT/url_shortener/internal/helper"
 	"github.com/MrBorisT/url_shortener/internal/models"
 	"github.com/MrBorisT/url_shortener/internal/service"
@@ -25,10 +26,10 @@ func Register(userService *service.AuthService) http.HandlerFunc {
 
 		if err := userService.RegisterUser(r.Context(), userRequest); err != nil {
 			switch err {
-			case service.ErrEmptyUserEmail, service.ErrIncorrectUserEmail, service.ErrEmptyUserPassword, service.ErrShortUserPassword, service.ErrLongUserPassword:
+			case autherr.ErrEmptyUserEmail, autherr.ErrIncorrectUserEmail, autherr.ErrEmptyUserPassword, autherr.ErrShortUserPassword, autherr.ErrLongUserPassword:
 				_ = helper.WriteJSONError(w, http.StatusBadRequest, err.Error())
 				return
-			case service.ErrUserAlreadyExists:
+			case autherr.ErrUserAlreadyExists:
 				_ = helper.WriteJSONError(w, http.StatusConflict, "user with this email already exists")
 			default:
 				log.Println("registering user:", err)
@@ -55,7 +56,7 @@ func Login(userService *service.AuthService) http.HandlerFunc {
 		userID, err := userService.AuthenticateUser(r.Context(), userRequest)
 		if err != nil {
 			switch {
-			case errors.Is(err, service.ErrInvalidCredentials):
+			case errors.Is(err, autherr.ErrInvalidCredentials):
 				_ = helper.WriteJSONError(w, http.StatusUnauthorized, "invalid email or password")
 			default:
 				log.Println("logging in user:", err)
