@@ -2,6 +2,7 @@ package mw
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"strings"
 
@@ -48,7 +49,14 @@ func AuthMiddleware(authService *service.AuthService) func(http.Handler) http.Ha
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), UserIDKey, userID)
+			userUUID, err := uuid.Parse(userID)
+			if err != nil {
+				log.Println("parsing user ID from token:", err)
+				_ = helper.WriteJSONError(w, http.StatusUnauthorized, "invalid token")
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), UserIDKey, userUUID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
