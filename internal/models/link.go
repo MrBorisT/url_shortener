@@ -9,7 +9,7 @@ import (
 // db link
 type Link struct {
 	ID          uuid.UUID  `json:"id"`
-	UserID      string     `json:"user_id"`
+	UserID      uuid.UUID  `json:"user_id"`
 	OriginalURL string     `json:"original_url"`
 	ShortCode   string     `json:"short_code"`
 	ClickCount  int64      `json:"click_count"`

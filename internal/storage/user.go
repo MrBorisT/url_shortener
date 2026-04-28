@@ -28,11 +28,10 @@ func (s *UserStore) RegisterUser(ctx context.Context, userRequest models.UserReq
 	}
 
 	newUser := models.User{
-		ID:           s.generateID(),
 		Email:        userRequest.Email,
 		PasswordHash: hashedPassword,
 	}
-	query := "INSERT INTO users (id, email, password_hash) VALUES ($1, $2, $3)"
+	query := "INSERT INTO users (email, password_hash) VALUES ($1, $2)"
 	_, err = s.Pool.Exec(ctx, query, newUser.ID, newUser.Email, newUser.PasswordHash)
 	if err != nil {
 		var pgErr *pgconn.PgError

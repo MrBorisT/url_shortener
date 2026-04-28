@@ -1,17 +1,21 @@
 package models
 
-import "time"
+import (
+	"time"
 
-//db user
+	"github.com/google/uuid"
+)
+
+// db user
 type User struct {
-	ID           string    `json:"id"`
+	ID           uuid.UUID `json:"id"`
 	Email        string    `json:"email"`
 	PasswordHash string    `json:"-"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
-//requests
+// requests
 type UserRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
