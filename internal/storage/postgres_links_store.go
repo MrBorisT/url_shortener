@@ -112,7 +112,7 @@ func (s *PostgresLinksStore) CreateLink(ctx context.Context, link models.Link) (
 func (s *PostgresLinksStore) UpdateLink(ctx context.Context, userID uuid.UUID, linkID string, linkReq models.UpdateLinkRequest) (*models.Link, error) {
 	query := `
 	UPDATE links
-	SET original_url = $1, updated_at = NOW()
+	SET original_url = $1, updated_at = CURRENT_TIMESTAMP
 	WHERE user_id = $2 AND id = $3
 	RETURNING id, original_url, short_code, click_count, disabled_at, created_at, updated_at
 	`
@@ -158,7 +158,7 @@ func (s *PostgresLinksStore) DeleteLink(ctx context.Context, userID uuid.UUID, l
 func (s *PostgresLinksStore) DisableLink(ctx context.Context, userID uuid.UUID, linkID string) error {
 	query := `
 	UPDATE links
-	SET disabled_at = NOW()
+	SET disabled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
 	WHERE user_id = $1 AND id = $2
 	`
 
@@ -200,7 +200,7 @@ func (s *PostgresLinksStore) GetOriginalURL(ctx context.Context, shortLink strin
 func (s *PostgresLinksStore) IncrementClickCount(ctx context.Context, shortLink string) error {
 	query := `
 	UPDATE links
-	SET click_count = click_count + 1, updated_at = NOW()
+	SET click_count = click_count + 1, updated_at = CURRENT_TIMESTAMP
 	WHERE short_code = $1
 	`
 
