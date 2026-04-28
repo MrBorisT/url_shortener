@@ -41,7 +41,7 @@ func main() {
 	defer pool.Close()
 	userStore := storage.NewUserStore(pool)
 	authManager := auth.NewJWTManager(config)
-	linksStore := storage.NewLinksStore(pool)
+	linksStore := storage.NewPostgresLinksStore(pool)
 	linkService := service.NewLinkService(linksStore)
 	authService := service.NewAuthService(userStore, authManager)
 

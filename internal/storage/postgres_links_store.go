@@ -6,21 +6,23 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/MrBorisT/url_shortener/internal/linkerr"
 	"github.com/MrBorisT/url_shortener/internal/models"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type LinksStore struct {
+type PostgresLinksStore struct {
 	Pool *pgxpool.Pool
 }
 
-func NewLinksStore(pool *pgxpool.Pool) *LinksStore {
-	return &LinksStore{pool}
+func NewPostgresLinksStore(pool *pgxpool.Pool) *PostgresLinksStore {
+	return &PostgresLinksStore{pool}
 }
 
-func (s *LinksStore) ListLinks(ctx context.Context, userID string) ([]models.Link, error) {
+func (s *PostgresLinksStore) ListLinks(ctx context.Context, userID uuid.UUID) ([]models.Link, error) {
 	query := `
 	SELECT id, original_url, short_code, click_count, disabled_at, created_at, updated_at FROM links
 	WHERE user_id = $1
@@ -57,7 +59,7 @@ func (s *LinksStore) ListLinks(ctx context.Context, userID string) ([]models.Lin
 	return resultLinks, nil
 }
 
-func (s *LinksStore) GetLink(ctx context.Context, userID string, linkID string) (*models.Link, error) {
+func (s *PostgresLinksStore) GetLink(ctx context.Context, userID uuid.UUID, linkID string) (*models.Link, error) {
 	query := `
 	SELECT id, original_url, short_code, click_count, disabled_at, created_at, updated_at FROM links
 	WHERE user_id = $1 AND id = $2
@@ -75,7 +77,7 @@ func (s *LinksStore) GetLink(ctx context.Context, userID string, linkID string) 
 		&link.UpdatedAt,
 	); err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, ErrLinkNotFound
+			return nil, linkerr.ErrLinkNotFound
 		} else {
 			return nil, fmt.Errorf("get link: %w", err)
 		}
@@ -84,7 +86,7 @@ func (s *LinksStore) GetLink(ctx context.Context, userID string, linkID string) 
 	return &link, nil
 }
 
-func (s *LinksStore) CreateLink(ctx context.Context, link models.Link) (*models.Link, error) {
+func (s *PostgresLinksStore) CreateLink(ctx context.Context, link models.Link) (*models.Link, error) {
 	query := `
 		INSERT INTO links (original_url, user_id, short_code)
 		VALUES ($1, $2, $3)
@@ -98,7 +100,7 @@ func (s *LinksStore) CreateLink(ctx context.Context, link models.Link) (*models.
 		if errors.As(err, &pgErr) &&
 			pgErr.Code == PGCodeUniqueViolation &&
 			pgErr.ConstraintName == "links_short_code_key" {
-			return nil, ErrShortCodeTaken
+			return nil, linkerr.ErrShortCodeTaken
 		}
 
 		return nil, fmt.Errorf("create link: %w", err)
@@ -107,7 +109,7 @@ func (s *LinksStore) CreateLink(ctx context.Context, link models.Link) (*models.
 	return &link, nil
 }
 
-func (s *LinksStore) UpdateLink(ctx context.Context, userID string, linkID string, linkReq models.UpdateLinkRequest) (*models.Link, error) {
+func (s *PostgresLinksStore) UpdateLink(ctx context.Context, userID uuid.UUID, linkID string, linkReq models.UpdateLinkRequest) (*models.Link, error) {
 	query := `
 	UPDATE links
 	SET original_url = $1, updated_at = NOW()
@@ -126,7 +128,7 @@ func (s *LinksStore) UpdateLink(ctx context.Context, userID string, linkID strin
 		&updatedLink.UpdatedAt,
 	); err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, ErrLinkNotFound
+			return nil, linkerr.ErrLinkNotFound
 		} else {
 			return nil, fmt.Errorf("update link: %w", err)
 		}
@@ -135,7 +137,7 @@ func (s *LinksStore) UpdateLink(ctx context.Context, userID string, linkID strin
 	return &updatedLink, nil
 }
 
-func (s *LinksStore) DeleteLink(ctx context.Context, userID string, linkID string) error {
+func (s *PostgresLinksStore) DeleteLink(ctx context.Context, userID uuid.UUID, linkID string) error {
 	query := `
 	DELETE FROM links
 	WHERE user_id = $1 AND id = $2
@@ -147,13 +149,13 @@ func (s *LinksStore) DeleteLink(ctx context.Context, userID string, linkID strin
 	}
 
 	if tag.RowsAffected() == 0 {
-		return ErrLinkNotFound
+		return linkerr.ErrLinkNotFound
 	}
 
 	return nil
 }
 
-func (s *LinksStore) DisableLink(ctx context.Context, userID string, linkID string) error {
+func (s *PostgresLinksStore) DisableLink(ctx context.Context, userID uuid.UUID, linkID string) error {
 	query := `
 	UPDATE links
 	SET disabled_at = NOW()
@@ -166,13 +168,13 @@ func (s *LinksStore) DisableLink(ctx context.Context, userID string, linkID stri
 	}
 
 	if tag.RowsAffected() == 0 {
-		return ErrLinkNotFound
+		return linkerr.ErrLinkNotFound
 	}
 
 	return nil
 }
 
-func (s *LinksStore) GetOriginalURL(ctx context.Context, shortLink string) (string, error) {
+func (s *PostgresLinksStore) GetOriginalURL(ctx context.Context, shortLink string) (string, error) {
 	query := `
 	SELECT original_url, disabled_at FROM links
 	WHERE short_code = $1
@@ -182,20 +184,20 @@ func (s *LinksStore) GetOriginalURL(ctx context.Context, shortLink string) (stri
 	var disabledAt *time.Time
 	if err := s.Pool.QueryRow(ctx, query, shortLink).Scan(&originalURL, &disabledAt); err != nil {
 		if err == pgx.ErrNoRows {
-			return "", ErrLinkNotFound
+			return "", linkerr.ErrLinkNotFound
 		} else {
 			return "", fmt.Errorf("get original URL: %w", err)
 		}
 	}
 
 	if disabledAt != nil {
-		return "", ErrLinkDisabled
+		return "", linkerr.ErrLinkDisabled
 	}
 
 	return originalURL, nil
 }
 
-func (s *LinksStore) IncrementClickCount(ctx context.Context, shortLink string) error {
+func (s *PostgresLinksStore) IncrementClickCount(ctx context.Context, shortLink string) error {
 	query := `
 	UPDATE links
 	SET click_count = click_count + 1, updated_at = NOW()
@@ -208,7 +210,7 @@ func (s *LinksStore) IncrementClickCount(ctx context.Context, shortLink string) 
 	}
 
 	if tag.RowsAffected() == 0 {
-		return ErrLinkNotFound
+		return linkerr.ErrLinkNotFound
 	}
 
 	return nil

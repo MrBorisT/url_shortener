@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/MrBorisT/url_shortener/internal/linkerr"
 	"github.com/MrBorisT/url_shortener/internal/service"
-	"github.com/MrBorisT/url_shortener/internal/storage"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -17,9 +17,9 @@ func Redirect(linksService *service.LinkService) http.HandlerFunc {
 		originalURL, err := linksService.GetOriginalURL(r.Context(), shortLink)
 		if err != nil {
 			switch {
-			case errors.Is(err, storage.ErrLinkNotFound):
+			case errors.Is(err, linkerr.ErrLinkNotFound):
 				http.NotFound(w, r)
-			case errors.Is(err, storage.ErrLinkDisabled):
+			case errors.Is(err, linkerr.ErrLinkDisabled):
 				http.Error(w, http.StatusText(http.StatusGone), http.StatusGone)
 			default:
 				log.Println("getting original URL:", err)
@@ -28,7 +28,7 @@ func Redirect(linksService *service.LinkService) http.HandlerFunc {
 			return
 		}
 		if err := linksService.IncrementClickCount(r.Context(), shortLink); err != nil {
-			if errors.Is(err, storage.ErrLinkNotFound) {
+			if errors.Is(err, linkerr.ErrLinkNotFound) {
 				http.NotFound(w, r)
 				return
 			}

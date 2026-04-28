@@ -7,6 +7,7 @@ import (
 
 	"github.com/MrBorisT/url_shortener/internal/helper"
 	"github.com/MrBorisT/url_shortener/internal/service"
+	"github.com/google/uuid"
 )
 
 type contextKey string
@@ -53,7 +54,7 @@ func AuthMiddleware(authService *service.AuthService) func(http.Handler) http.Ha
 	}
 }
 
-func GetUserID(ctx context.Context) (string, bool) {
-	userID, ok := ctx.Value(UserIDKey).(string)
+func GetUserID(ctx context.Context) (uuid.UUID, bool) {
+	userID, ok := ctx.Value(UserIDKey).(uuid.UUID)
 	return userID, ok
 }
