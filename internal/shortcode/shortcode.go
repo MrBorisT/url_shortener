@@ -1,6 +1,9 @@
 package shortcode
 
-import "crypto/rand"
+import (
+	"crypto/rand"
+	"errors"
+)
 
 const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -10,7 +13,12 @@ func Generate() (string, error) {
 	return GenerateShortCode(DefaultLength)
 }
 
+var ErrInvalidLength = errors.New("length cannot be negative or zero")
+
 func GenerateShortCode(length int) (string, error) {
+	if length <= 0 {
+		return "", ErrInvalidLength
+	}
 	b := make([]byte, length)
 
 	if _, err := rand.Read(b); err != nil {
