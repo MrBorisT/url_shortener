@@ -20,9 +20,5 @@ func NormalizeURL(raw string) (string, error) {
 		return "", ErrURLInvalidScheme
 	}
 
-	if u.Host == "" {
-		return "", ErrURLMissingHost
-	}
-
 	return normalized, nil
 }
