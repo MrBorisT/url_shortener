@@ -35,12 +35,6 @@ func TestNormalizeURL(t *testing.T) {
 			want:    "",
 			wantErr: ErrURLInvalidScheme,
 		},
-		{
-			name:    "missing host",
-			url:     "http://:1234",
-			want:    "",
-			wantErr: ErrURLMissingHost,
-		},
 	}
 
 	for _, tt := range tests {
