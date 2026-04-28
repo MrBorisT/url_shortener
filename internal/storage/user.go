@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/MrBorisT/url_shortener/internal/models"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -32,7 +31,7 @@ func (s *UserStore) RegisterUser(ctx context.Context, userRequest models.UserReq
 		PasswordHash: hashedPassword,
 	}
 	query := "INSERT INTO users (email, password_hash) VALUES ($1, $2)"
-	_, err = s.Pool.Exec(ctx, query, newUser.ID, newUser.Email, newUser.PasswordHash)
+	_, err = s.Pool.Exec(ctx, query, newUser.Email, newUser.PasswordHash)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == PGCodeUniqueViolation {
@@ -60,10 +59,6 @@ func (s *UserStore) GetUserID(ctx context.Context, userRequest models.UserReques
 	}
 
 	return userID, nil
-}
-
-func (s *UserStore) generateID() string {
-	return uuid.New().String()
 }
 
 func (s *UserStore) hashPassword(password string) (string, error) {
