@@ -34,6 +34,9 @@ func (s *AuthService) RegisterUser(ctx context.Context, userRequest models.UserR
 }
 
 func (s *AuthService) AuthenticateUser(ctx context.Context, userRequest models.UserRequest) (string, error) {
+	if err := verifyUserRequest(&userRequest); err != nil {
+		return "", err
+	}
 	userID, err := s.AuthStore.GetUserID(ctx, userRequest)
 	if err != nil {
 		return "", err
