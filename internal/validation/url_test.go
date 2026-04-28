@@ -37,6 +37,12 @@ func TestNormalizeURL(t *testing.T) {
 			want:    "",
 			wantErr: linkerr.ErrURLInvalidScheme,
 		},
+		{
+			name:    "missing host",
+			url:     "http:///path",
+			want:    "",
+			wantErr: linkerr.ErrURLMissingHost,
+		},
 	}
 
 	for _, tt := range tests {
