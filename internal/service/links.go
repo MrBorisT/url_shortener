@@ -52,12 +52,12 @@ func (s *LinkService) CreateLink(ctx context.Context, userID uuid.UUID, req mode
 		return nil, err
 	}
 
-	return nil, ErrCouldNotGenerateShortCode
+	return nil, linkerr.ErrCouldNotGenerateShortCode
 }
 
 func (s *LinkService) UpdateLink(ctx context.Context, userID uuid.UUID, linkID string, req models.UpdateLinkRequest) (*models.Link, error) {
 	if linkID == "" {
-		return nil, ErrEmptyLinkID
+		return nil, linkerr.ErrEmptyLinkID
 	}
 
 	originalURL, err := validation.NormalizeURL(req.OriginalURL)
@@ -69,8 +69,8 @@ func (s *LinkService) UpdateLink(ctx context.Context, userID uuid.UUID, linkID s
 
 	link, err := s.LinksStore.UpdateLink(ctx, userID, linkID, req)
 	if err != nil {
-		if errors.Is(err, ErrLinkNotFound) {
-			return nil, ErrLinkNotFound
+		if errors.Is(err, linkerr.ErrLinkNotFound) {
+			return nil, linkerr.ErrLinkNotFound
 		}
 		return nil, err
 	}
@@ -79,12 +79,12 @@ func (s *LinkService) UpdateLink(ctx context.Context, userID uuid.UUID, linkID s
 
 func (s *LinkService) DeleteLink(ctx context.Context, userID uuid.UUID, linkID string) error {
 	if linkID == "" {
-		return ErrEmptyLinkID
+		return linkerr.ErrEmptyLinkID
 	}
 
 	if err := s.LinksStore.DeleteLink(ctx, userID, linkID); err != nil {
-		if errors.Is(err, ErrLinkNotFound) {
-			return ErrLinkNotFound
+		if errors.Is(err, linkerr.ErrLinkNotFound) {
+			return linkerr.ErrLinkNotFound
 		}
 		return err
 	}
@@ -93,11 +93,11 @@ func (s *LinkService) DeleteLink(ctx context.Context, userID uuid.UUID, linkID s
 
 func (s *LinkService) DisableLink(ctx context.Context, userID uuid.UUID, linkID string) error {
 	if linkID == "" {
-		return ErrEmptyLinkID
+		return linkerr.ErrEmptyLinkID
 	}
 	if err := s.LinksStore.DisableLink(ctx, userID, linkID); err != nil {
-		if errors.Is(err, ErrLinkNotFound) {
-			return ErrLinkNotFound
+		if errors.Is(err, linkerr.ErrLinkNotFound) {
+			return linkerr.ErrLinkNotFound
 		}
 		return err
 	}
@@ -106,12 +106,12 @@ func (s *LinkService) DisableLink(ctx context.Context, userID uuid.UUID, linkID 
 
 func (s *LinkService) GetLink(ctx context.Context, userID uuid.UUID, linkID string) (*models.Link, error) {
 	if linkID == "" {
-		return nil, ErrEmptyLinkID
+		return nil, linkerr.ErrEmptyLinkID
 	}
 	link, err := s.LinksStore.GetLink(ctx, userID, linkID)
 	if err != nil {
-		if errors.Is(err, ErrLinkNotFound) {
-			return nil, ErrLinkNotFound
+		if errors.Is(err, linkerr.ErrLinkNotFound) {
+			return nil, linkerr.ErrLinkNotFound
 		}
 		return nil, err
 	}

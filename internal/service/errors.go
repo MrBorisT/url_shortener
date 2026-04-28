@@ -3,12 +3,6 @@ package service
 import "errors"
 
 var (
-	//links
-	ErrCouldNotGenerateShortCode = errors.New("could not generate unique short code")
-	ErrEmptyLinkID               = errors.New("link id is required")
-	ErrLinkNotFound              = errors.New("link not found")
-	ErrLinkDisabled              = errors.New("link is disabled")
-
 	//user
 	ErrEmptyUserEmail     = errors.New("user email cannot be empty")
 	ErrIncorrectUserEmail = errors.New("user email must be a valid email address")

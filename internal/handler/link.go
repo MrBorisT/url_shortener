@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/MrBorisT/url_shortener/internal/helper"
+	"github.com/MrBorisT/url_shortener/internal/linkerr"
 	mw "github.com/MrBorisT/url_shortener/internal/middleware"
 	"github.com/MrBorisT/url_shortener/internal/models"
 	"github.com/MrBorisT/url_shortener/internal/service"
@@ -53,7 +54,7 @@ func GetLink(linksService *service.LinkService) http.HandlerFunc {
 
 		link, err := linksService.GetLink(r.Context(), userID, linkID)
 
-		if errors.Is(err, service.ErrLinkNotFound) {
+		if errors.Is(err, linkerr.ErrLinkNotFound) {
 			_ = helper.WriteJSONError(w, http.StatusNotFound, "link not found")
 			return
 		}
@@ -120,9 +121,9 @@ func DeleteLink(linkService *service.LinkService) http.HandlerFunc {
 
 		if err := linkService.DeleteLink(r.Context(), userID, linkID); err != nil {
 			switch {
-			case errors.Is(err, service.ErrEmptyLinkID):
+			case errors.Is(err, linkerr.ErrEmptyLinkID):
 				_ = helper.WriteJSONError(w, http.StatusBadRequest, "link id is required")
-			case errors.Is(err, service.ErrLinkNotFound):
+			case errors.Is(err, linkerr.ErrLinkNotFound):
 				_ = helper.WriteJSONError(w, http.StatusNotFound, "link not found")
 			default:
 				_ = helper.WriteJSONError(w, http.StatusInternalServerError, helper.ErrInternal)
@@ -146,9 +147,9 @@ func DisableLink(linkService *service.LinkService) http.HandlerFunc {
 
 		if err := linkService.DisableLink(r.Context(), userID, linkID); err != nil {
 			switch {
-			case errors.Is(err, service.ErrEmptyLinkID):
+			case errors.Is(err, linkerr.ErrEmptyLinkID):
 				_ = helper.WriteJSONError(w, http.StatusBadRequest, "link id is required")
-			case errors.Is(err, service.ErrLinkNotFound):
+			case errors.Is(err, linkerr.ErrLinkNotFound):
 				_ = helper.WriteJSONError(w, http.StatusNotFound, "link not found")
 			default:
 				log.Println("disabling link:", err)
@@ -184,7 +185,7 @@ func UpdateLink(linkService *service.LinkService) http.HandlerFunc {
 				return
 			}
 			switch {
-			case errors.Is(err, service.ErrLinkNotFound):
+			case errors.Is(err, linkerr.ErrLinkNotFound):
 				_ = helper.WriteJSONError(w, http.StatusNotFound, "link not found")
 			default:
 				log.Println("updating link:", err)

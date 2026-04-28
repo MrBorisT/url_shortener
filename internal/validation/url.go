@@ -3,21 +3,23 @@ package validation
 import (
 	"net/url"
 	"strings"
+
+	"github.com/MrBorisT/url_shortener/internal/linkerr"
 )
 
 func NormalizeURL(raw string) (string, error) {
 	normalized := strings.TrimSpace(raw)
 	if normalized == "" {
-		return "", ErrURLRequired
+		return "", linkerr.ErrURLRequired
 	}
 
 	u, err := url.ParseRequestURI(normalized)
 	if err != nil {
-		return "", ErrURLInvalid
+		return "", linkerr.ErrURLInvalid
 	}
 
 	if u.Scheme != "http" && u.Scheme != "https" {
-		return "", ErrURLInvalidScheme
+		return "", linkerr.ErrURLInvalidScheme
 	}
 
 	return normalized, nil
