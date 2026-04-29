@@ -6,6 +6,7 @@ import (
 
 	"github.com/MrBorisT/url_shortener/internal/linkerr"
 	"github.com/MrBorisT/url_shortener/internal/models"
+	"github.com/MrBorisT/url_shortener/internal/validation"
 	"github.com/google/uuid"
 )
 
@@ -85,21 +86,21 @@ func TestUpdateLink(t *testing.T) {
 			name:     "empty original URL",
 			shortURL: "test-url",
 			req:      models.UpdateLinkRequest{OriginalURL: ""},
-			wantErr:  linkerr.ErrURLRequired,
+			wantErr:  validation.ErrURLRequired,
 			wantURL:  "",
 		},
 		{
 			name:     "invalid original URL",
 			shortURL: "test-url",
 			req:      models.UpdateLinkRequest{OriginalURL: "not-a-url"},
-			wantErr:  linkerr.ErrURLInvalid,
+			wantErr:  validation.ErrURLInvalid,
 			wantURL:  "",
 		},
 		{
 			name:     "invalid URL scheme",
 			shortURL: "test-url",
 			req:      models.UpdateLinkRequest{OriginalURL: "ftp://www.example.com"},
-			wantErr:  linkerr.ErrURLInvalidScheme,
+			wantErr:  validation.ErrURLInvalidScheme,
 			wantURL:  "",
 		},
 		{

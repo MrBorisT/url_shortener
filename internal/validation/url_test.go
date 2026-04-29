@@ -2,8 +2,6 @@ package validation
 
 import (
 	"testing"
-
-	"github.com/MrBorisT/url_shortener/internal/linkerr"
 )
 
 func TestNormalizeURL(t *testing.T) {
@@ -23,25 +21,25 @@ func TestNormalizeURL(t *testing.T) {
 			name:    "empty url",
 			url:     "   ",
 			want:    "",
-			wantErr: linkerr.ErrURLRequired,
+			wantErr: ErrURLRequired,
 		},
 		{
 			name:    "invalid url",
 			url:     "www.example.com",
 			want:    "",
-			wantErr: linkerr.ErrURLInvalid,
+			wantErr: ErrURLInvalid,
 		},
 		{
 			name:    "invalid url scheme",
 			url:     "ftp://www.example.com",
 			want:    "",
-			wantErr: linkerr.ErrURLInvalidScheme,
+			wantErr: ErrURLInvalidScheme,
 		},
 		{
 			name:    "missing host",
 			url:     "http:///path",
 			want:    "",
-			wantErr: linkerr.ErrURLMissingHost,
+			wantErr: ErrURLMissingHost,
 		},
 	}
 

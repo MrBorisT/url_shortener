@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/MrBorisT/url_shortener/internal/linkerr"
+	"github.com/MrBorisT/url_shortener/internal/validation"
 )
 
 type ErrorResponse struct {
@@ -22,11 +22,11 @@ func WriteJSONError(w http.ResponseWriter, status int, message string) error {
 
 func WriteValidationError(w http.ResponseWriter, err error) bool {
 	switch {
-	case errors.Is(err, linkerr.ErrURLRequired):
+	case errors.Is(err, validation.ErrURLRequired):
 		_ = WriteJSONError(w, http.StatusBadRequest, "original_url is required")
-	case errors.Is(err, linkerr.ErrURLInvalid):
+	case errors.Is(err, validation.ErrURLInvalid):
 		_ = WriteJSONError(w, http.StatusBadRequest, "original_url must be a valid URL")
-	case errors.Is(err, linkerr.ErrURLInvalidScheme):
+	case errors.Is(err, validation.ErrURLInvalidScheme):
 		_ = WriteJSONError(w, http.StatusBadRequest, "original_url scheme must be http or https")
 	default:
 		return false
