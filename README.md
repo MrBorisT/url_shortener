@@ -1,42 +1,49 @@
+![CI](https://github.com/MrBorisT/url_shortener/actions/workflows/ci.yml/badge.svg)
 # URL Shortener API
 
-A small backend URL shortener written in Go.
+A small, complete backend API for creating and managing short links.
 
-It supports user registration, JWT login, user-owned short links, public redirects, link disabling, click counting, PostgreSQL persistence, migrations, and Docker Compose setup.
+This project is intentionally scoped as a backend API slice: authentication, user-owned resources, PostgreSQL persistence, migrations, Docker setup, tests, CI, and a clear HTTP contract.
 
-## What it does
+It is not trying to be a production-ready Bitly clone.
 
-This API allows users to create and manage their own shortened links.
+## Project goals
 
-Authenticated users can:
+The goal of this project is to demonstrate backend engineering fundamentals in a compact service:
 
-- create short links
-- list their links
-- get a single link
-- update the original URL
-- disable a link
-- delete a link
-
-Public users can open a short URL and get redirected to the original URL.
-
-Example:
-
-```text
-GET /abc123XY
-```
-
-redirects to the original URL stored for that short code.
+- JWT-based authentication
+- user ownership and protected resources
+- PostgreSQL data modeling
+- database migrations
+- validation and error handling
+- public redirect behavior
+- unit and integration testing
+- Docker Compose local environment
+- CI with tests and linting
 
 ## Features
 
-- JWT auth
-- user-owned links
-- redirect by short code
-- disable links
-- click counter
+- User registration
+- Login with JWT
+- Protected links API
+- Users can manage only their own links
+- Create short links
+- List own links
+- Get one own link
+- Update original URL
+- Disable link
+- Delete link
+- Public redirect by short code
+- Click counter increments on redirect
+- Disabled links return `410 Gone`
+- Unknown short codes return `404 Not Found`
+- URL validation
 - PostgreSQL persistence
-- database migrations
+- SQL migrations
 - Docker Compose setup
+- Unit tests and integration tests
+- GitHub Actions CI
+- golangci-lint configuration
 
 ## Tech stack
 
@@ -44,46 +51,45 @@ redirects to the original URL stored for that short code.
 - chi
 - pgx
 - PostgreSQL
-- Docker
-- Docker Compose
+- Docker / Docker Compose
 - golang-migrate
 - JWT
 - bcrypt
+- GitHub Actions
+- golangci-lint
 
-## API
+## API overview
 
-Base URL:
+| Method | Endpoint | Auth | Description |
+|---|---|---:|---|
+| `GET` | `/health` | No | Health check |
+| `POST` | `/api/auth/register` | No | Register a new user |
+| `POST` | `/api/auth/login` | No | Login and receive JWT |
+| `POST` | `/api/links` | Yes | Create a short link |
+| `GET` | `/api/links` | Yes | List current user's links |
+| `GET` | `/api/links/{id}` | Yes | Get one current user's link |
+| `PATCH` | `/api/links/{id}` | Yes | Update original URL |
+| `DELETE` | `/api/links/{id}` | Yes | Delete link |
+| `POST` | `/api/links/{id}/disable` | Yes | Disable link |
+| `GET` | `/{short_code}` | No | Redirect to original URL |
 
-```text
-http://localhost:8080
+Authenticated API endpoints return JSON errors:
+
+```json
+{
+  "error": "link not found"
+}
 ```
 
-### Auth
-
-| Endpoint | Method | Auth | Description |
-|---|---:|---:|---|
-| `/api/auth/register` | POST | No | Register a new user |
-| `/api/auth/login` | POST | No | Login and receive a JWT token |
-
-### Links
-
-| Endpoint | Method | Auth | Description |
-|---|---:|---:|---|
-| `/api/links/` | POST | Yes | Create a short link |
-| `/api/links/` | GET | Yes | List current user's links |
-| `/api/links/{id}` | GET | Yes | Get one link by ID |
-| `/api/links/{id}` | PATCH | Yes | Update the original URL |
-| `/api/links/{id}` | DELETE | Yes | Delete a link |
-| `/api/links/{id}/disable` | POST | Yes | Disable a link |
-
-### Public
-
-| Endpoint | Method | Auth | Description |
-|---|---:|---:|---|
-| `/health` | GET | No | Health check |
-| `/{short_code}` | GET | No | Redirect to original URL |
+The public redirect endpoint may return plain HTTP errors, for example `404 Not Found` or `410 Gone`.
 
 ## Request examples
+
+### Health check
+
+```bash
+curl http://localhost:8080/health
+```
 
 ### Register
 
@@ -115,118 +121,129 @@ Response:
 }
 ```
 
+For the examples below:
+
+```bash
+TOKEN="jwt_token_here"
+```
+
 ### Create link
 
 ```bash
-curl -i -X POST http://localhost:8080/api/links/ \
+curl -i -X POST http://localhost:8080/api/links \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer jwt_token_here" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "original_url": "https://example.com"
   }'
 ```
 
+Example response:
+
+```json
+{
+  "id": "0f38f54a-4a89-4d85-b6c7-9c763a777111",
+  "user_id": "1e93f8e5-9a9c-4430-9873-dc43ad55c001",
+  "original_url": "https://example.com",
+  "short_code": "aB12xYz9",
+  "click_count": 0,
+  "created_at": "2026-04-30T18:00:00Z",
+  "updated_at": "2026-04-30T18:00:00Z"
+}
+```
+
 ### List links
 
 ```bash
-curl -i http://localhost:8080/api/links/ \
-  -H "Authorization: Bearer jwt_token_here"
+curl -i http://localhost:8080/api/links \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Get one link
 
 ```bash
-curl -i http://localhost:8080/api/links/{id} \
-  -H "Authorization: Bearer jwt_token_here"
+curl -i http://localhost:8080/api/links/0f38f54a-4a89-4d85-b6c7-9c763a777111 \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-### Update link
+### Update original URL
 
 ```bash
-curl -i -X PATCH http://localhost:8080/api/links/{id} \
+curl -i -X PATCH http://localhost:8080/api/links/0f38f54a-4a89-4d85-b6c7-9c763a777111 \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer jwt_token_here" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
-    "original_url": "https://example.org"
+    "original_url": "https://go.dev"
   }'
 ```
 
 ### Disable link
 
 ```bash
-curl -i -X POST http://localhost:8080/api/links/{id}/disable \
-  -H "Authorization: Bearer jwt_token_here"
+curl -i -X POST http://localhost:8080/api/links/0f38f54a-4a89-4d85-b6c7-9c763a777111/disable \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+After disabling, redirecting by its short code returns:
+
+```http
+410 Gone
 ```
 
 ### Delete link
 
 ```bash
-curl -i -X DELETE http://localhost:8080/api/links/{id} \
-  -H "Authorization: Bearer jwt_token_here"
+curl -i -X DELETE http://localhost:8080/api/links/0f38f54a-4a89-4d85-b6c7-9c763a777111 \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Redirect
 
 ```bash
-curl -i http://localhost:8080/{short_code}
+curl -i http://localhost:8080/aB12xYz9
 ```
 
-A valid active short code returns a `302 Found` redirect.
+Successful redirects return:
 
-## Run with Docker
-
-Start the full stack:
-
-```bash
-docker compose up --build
+```http
+302 Found
+Location: https://example.com
 ```
 
-This starts:
+Unknown short codes return:
 
-- PostgreSQL
-- migration container
-- API container
-
-The API will be available at:
-
-```text
-http://localhost:8080
+```http
+404 Not Found
 ```
 
-Stop containers:
+Disabled links return:
 
-```bash
-docker compose down
-```
-
-Stop containers and remove the database volume:
-
-```bash
-docker compose down -v
+```http
+410 Gone
 ```
 
 ## Environment variables
 
-The app reads configuration from environment variables.
+The application reads configuration from environment variables.
 
-| Variable | Required | Default | Description |
-|---|---:|---:|---|
-| `DB_HOST` | Yes | - | PostgreSQL host |
-| `DB_PORT` | Yes | - | PostgreSQL port |
-| `DB_NAME` | Yes | - | PostgreSQL database name |
-| `DB_USER` | Yes | - | PostgreSQL user |
-| `DB_PASSWORD` | Yes | - | PostgreSQL password |
-| `DB_SSLMODE` | Yes | - | PostgreSQL SSL mode |
-| `APP_PORT` | No | `8080` | HTTP server port |
-| `APP_ENV` | No | - | Use `production` in Docker to skip loading `.env` |
-| `JWT_SECRET` | Yes | - | Secret key used to sign JWT tokens |
-| `JWT_TTL` | No | `24h` | JWT lifetime |
+| Variable | Description | Example |
+|---|---|---|
+| `DB_HOST` | PostgreSQL host | `localhost` |
+| `DB_PORT` | PostgreSQL port | `5432` |
+| `DB_NAME` | PostgreSQL database name | `urlshortener` |
+| `DB_USER` | PostgreSQL user | `postgres` |
+| `DB_PASSWORD` | PostgreSQL password | `postgres` |
+| `DB_SSLMODE` | PostgreSQL SSL mode | `disable` |
+| `APP_PORT` | HTTP server port | `8080` |
+| `APP_ENV` | Runtime environment | `development` |
+| `JWT_SECRET` | Secret used to sign JWTs | `change-me` |
+| `JWT_TTL` | JWT lifetime | `24h` |
 
-Docker Compose already provides the required variables for local container usage.
+`JWT_SECRET` is required.
 
-For local non-Docker runs, create a `.env` file or export the variables manually.
+Docker Compose uses development credentials and a development JWT secret for local usage only. Do not reuse them in real deployments.
 
-Example:
+Example `.env` for local development:
 
 ```env
 DB_HOST=localhost
@@ -236,123 +253,291 @@ DB_USER=postgres
 DB_PASSWORD=postgres
 DB_SSLMODE=disable
 APP_PORT=8080
-JWT_SECRET=change_me
+APP_ENV=development
+JWT_SECRET=change-me-local-secret
 JWT_TTL=24h
 ```
 
-## Migrations
+## Run with Docker Compose
 
-Migrations are stored in the `migrations/` directory.
+Docker Compose starts:
 
-Current migrations create:
-
-- `users` table
-- `links` table
-- index on `links.user_id`
-
-When using Docker Compose, migrations run automatically through the `migrate` service.
-
-Manual migration example:
-
-```bash
-migrate \
-  -path migrations \
-  -database "postgres://postgres:postgres@localhost:5432/urlshortener?sslmode=disable" \
-  up
-```
-
-Rollback example:
-
-```bash
-migrate \
-  -path migrations \
-  -database "postgres://postgres:postgres@localhost:5432/urlshortener?sslmode=disable" \
-  down
-```
-
-## Testing
-
-Run Go tests:
-
-```bash
-go test ./...
-```
-
-For a basic manual smoke test:
+- PostgreSQL
+- migration container
+- API container
 
 ```bash
 docker compose up --build
 ```
 
-Then check:
+The API will be available at:
 
-```bash
-curl -i http://localhost:8080/health
+```text
+http://localhost:8080
 ```
 
-Recommended manual flow:
+Stop the stack:
 
-1. Register a user
-2. Login and copy the JWT token
-3. Create a link
-4. Open the returned short code
-5. Check that `click_count` increases
-6. Disable the link
-7. Confirm that redirect returns `410 Gone`
-8. Delete the link
+```bash
+docker compose down
+```
+
+Remove local database volume:
+
+```bash
+docker compose down -v
+```
+
+The Compose setup is intended for local development. It uses development database credentials and a local JWT secret.
+
+## Run locally
+
+Start PostgreSQL first. You can use Docker Compose for the database only:
+
+```bash
+docker compose up db
+```
+
+Create a local `.env` file:
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=urlshortener
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_SSLMODE=disable
+APP_PORT=8080
+APP_ENV=development
+JWT_SECRET=change-me-local-secret
+JWT_TTL=24h
+```
+
+Run migrations:
+
+```bash
+migrate -path ./migrations \
+  -database "postgres://postgres:postgres@localhost:5432/urlshortener?sslmode=disable" \
+  up
+```
+
+Run the API:
+
+```bash
+go run ./cmd/api
+```
+
+## Migrations
+
+Migrations are stored in `migrations/`.
+
+Current migrations:
+
+```text
+001_create_users_table
+002_create_links_table
+```
+
+Run migrations up:
+
+```bash
+migrate -path ./migrations \
+  -database "postgres://postgres:postgres@localhost:5432/urlshortener?sslmode=disable" \
+  up
+```
+
+Rollback one migration:
+
+```bash
+migrate -path ./migrations \
+  -database "postgres://postgres:postgres@localhost:5432/urlshortener?sslmode=disable" \
+  down 1
+```
+
+## Testing
+
+Run unit tests:
+
+```bash
+go test ./...
+```
+
+Run integration tests:
+
+```bash
+go test -tags=integration ./...
+```
+
+Integration tests require PostgreSQL and `TEST_DATABASE_URL`.
+
+Example:
+
+```bash
+export TEST_DATABASE_URL="postgres://postgres:postgres@localhost:5432/url_shortener_test?sslmode=disable"
+
+migrate -path ./migrations \
+  -database "$TEST_DATABASE_URL" \
+  up
+
+go test -tags=integration ./...
+```
+
+On Windows PowerShell:
+
+```powershell
+$env:TEST_DATABASE_URL="postgres://postgres:postgres@localhost:5432/url_shortener_test?sslmode=disable"
+
+migrate -path ./migrations `
+  -database $env:TEST_DATABASE_URL `
+  up
+
+go test -tags=integration ./...
+```
+
+Test coverage includes:
+
+- URL validation
+- short code generation
+- service behavior
+- registration and login
+- protected routes
+- link ownership
+- redirects
+- disabled links
+- click counter incrementing
+
+## CI
+
+GitHub Actions runs on pushes and pull requests to `main`.
+
+The CI job:
+
+1. Starts a PostgreSQL service
+2. Installs `golang-migrate`
+3. Runs migrations
+4. Runs unit tests
+5. Runs integration tests with the `integration` build tag
+6. Runs `golangci-lint`
+
+The linter configuration includes:
+
+- `govet`
+- `staticcheck`
+- `ineffassign`
+- `unused`
+- `gofmt`
+
+## Data model summary
+
+### users
+
+Stores registered users.
+
+Main fields:
+
+- `id` — UUID primary key
+- `email` — unique email
+- `password_hash` — bcrypt hash
+- `created_at`
+- `updated_at`
+
+### links
+
+Stores shortened links.
+
+Main fields:
+
+- `id` — internal UUID primary key
+- `user_id` — owner ID, references `users(id)`
+- `original_url` — destination URL
+- `short_code` — public redirect code, unique
+- `click_count` — incremented on successful redirect
+- `disabled_at` — nullable timestamp
+- `created_at`
+- `updated_at`
+
+The public short code is separate from the internal UUID. API management uses internal link IDs. Public redirects use short codes.
 
 ## Design decisions
 
-### 302 redirect
+### 302 redirect instead of 301
 
-Redirects use `302 Found`.
+Redirects use `302 Found`, not `301 Moved Permanently`.
 
-This is intentional for an MVP because the target URL can be changed later. A permanent `301` redirect would be more aggressive and may be cached by clients.
+The target URL may change, and permanent redirect caching is undesirable for this MVP.
 
-### Sync click counting
+### Synchronous click counting
 
-Click counting is done synchronously during redirect.
+Click counting happens synchronously during redirect.
 
-This keeps the implementation simple and transparent. For a small portfolio backend this is acceptable. In a higher-load system, this could be moved to a queue, background worker, Redis, or batched writes.
+This keeps the system simple and visible for the current scope. A larger system could move this to an async event pipeline.
 
-### Hard delete + disable
+### Hard delete plus disable
 
 The API supports both:
 
-- hard delete through `DELETE /api/links/{id}`
-- soft disabling through `POST /api/links/{id}/disable`
+- hard delete for removing a link
+- disable for keeping the link record while making the public redirect unavailable
 
-Disabled links remain in the database but no longer redirect.
+Disabled redirects return `410 Gone`.
 
-Deleted links are removed from storage.
+### Ownership enforced in storage queries
 
-### No Redis / rate limiting / frontend by design
+User-owned link operations include `user_id` in storage queries.
 
-This project intentionally keeps the scope small.
+A user cannot read, update, disable, or delete another user's links. Non-owned links are treated as not found.
 
-Not included by design:
+### Separate internal ID and public code
 
-- Redis cache
-- async workers
+The internal link ID is a UUID.
+
+The public short code is a separate unique value used only for redirects. This avoids exposing internal IDs as public redirect identifiers.
+
+## Scaling notes
+
+This project intentionally keeps the architecture simple. If it needed to handle higher traffic, the first areas to revisit would be:
+
+- async click tracking
+- caching hot redirects
 - rate limiting
-- frontend UI
-- analytics dashboard
-- custom aliases
+- short code collision strategy
+- observability and structured logging
+- database indexes based on real query patterns
+- abuse prevention
+- deployment and secret management
 
-The goal is a focused backend API, not a full Bitly clone.
+These are not implemented because the goal is a complete backend API slice, not a distributed URL shortening platform.
 
 ## Future improvements
 
-- Add automated tests for handlers, services, validation, and storage
-- Add refresh tokens
-- Add rate limiting for auth and redirects
-- Add custom short codes
-- Add pagination for link listing
-- Add structured logging
-- Add OpenAPI / Swagger documentation
-- Add request ID middleware
-- Add graceful shutdown
-- Add CI pipeline
-- Add Makefile for common commands
-- Add soft delete with `deleted_at` instead of hard delete
-- Add redirect analytics by date, IP hash, or user agent
+Possible improvements:
+
+- OpenAPI specification
+- refresh tokens
+- pagination for link listing
+- custom aliases
+- expiration dates
+- rate limiting
+- structured logging
+- request IDs
+- metrics
+- better test coverage around edge cases
+- deployment configuration
+- frontend or simple admin UI
+
+## Intentionally out of scope
+
+The following are intentionally excluded from the current scope:
+
+- Redis
+- async workers
+- distributed counters
+- rate limiting
+- frontend
+- custom aliases
+- OpenAPI
+- analytics dashboard
+- multi-region deployment
+- production-grade secret management
+
+The purpose of this project is to show a clean, finished backend service with realistic boundaries.
