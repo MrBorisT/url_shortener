@@ -152,3 +152,22 @@ func createTestLink(t *testing.T, router http.Handler, token, originalURL string
 
 	return resp
 }
+
+func disableTestLink(t *testing.T, router http.Handler, token, originalURLID string) {
+	t.Helper()
+
+	req := httptest.NewRequest(http.MethodPost, "/api/links/"+originalURLID+"/disable", nil)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("disable test link: expected status %d, got %d, body: %s",
+			http.StatusOK,
+			rr.Code,
+			rr.Body.String(),
+		)
+	}
+}
