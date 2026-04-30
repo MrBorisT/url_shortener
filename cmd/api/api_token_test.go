@@ -16,13 +16,21 @@ func TestLinksToken(t *testing.T) {
 	token := loginUser(t, api.router, "test-1@example.com", "secret123")
 
 	tests := []struct {
-		name       string
-		httpMethod string
-		wantCode   int
-		token      string
+		name         string
+		httpMethod   string
+		wantCode     int
+		token        string
+		noAuthHeader bool
 	}{
 		{
-			name:       "protected route without token",
+			name:         "protected route without token",
+			httpMethod:   http.MethodGet,
+			wantCode:     http.StatusUnauthorized,
+			token:        "",
+			noAuthHeader: true,
+		},
+		{
+			name:       "protected route with empty token",
 			httpMethod: http.MethodGet,
 			wantCode:   http.StatusUnauthorized,
 			token:      "",
@@ -39,7 +47,10 @@ func TestLinksToken(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(tt.httpMethod, "/api/links", nil)
 			req.Header.Set("Content-Type", "application/json")
-			req.Header.Set("Authorization", "Bearer "+tt.token)
+
+			if !tt.noAuthHeader {
+				req.Header.Set("Authorization", "Bearer "+tt.token)
+			}
 
 			rr := httptest.NewRecorder()
 			api.router.ServeHTTP(rr, req)
