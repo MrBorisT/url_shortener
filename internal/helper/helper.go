@@ -28,6 +28,8 @@ func WriteValidationError(w http.ResponseWriter, err error) bool {
 		_ = WriteJSONError(w, http.StatusBadRequest, "original_url must be a valid URL")
 	case errors.Is(err, validation.ErrURLInvalidScheme):
 		_ = WriteJSONError(w, http.StatusBadRequest, "original_url scheme must be http or https")
+	case errors.Is(err, validation.ErrURLMissingHost):
+		_ = WriteJSONError(w, http.StatusBadRequest, "original_url must have a valid host")
 	default:
 		return false
 	}
