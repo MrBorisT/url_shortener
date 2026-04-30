@@ -1,3 +1,5 @@
+//go:build integration
+
 package main
 
 import (
@@ -6,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestToken(t *testing.T) {
+func TestLinksToken(t *testing.T) {
 	api := setupTestAPI(t)
 
 	truncateTestDB(t, api.pool)
