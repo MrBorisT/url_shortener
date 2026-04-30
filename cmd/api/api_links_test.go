@@ -52,7 +52,7 @@ func TestLinksRoutes(t *testing.T) {
 			name:               "user B cannot update user A's links",
 			httpMethod:         http.MethodPatch,
 			url:                "/api/links/{link_id}",
-			body:               "",
+			body:               `{"original_url":"https://example.com"}`,
 			expectedStatus:     http.StatusNotFound,
 			userB:              testUser{email: "test-1@example.com", password: "secret123"},
 			createLinkForUserA: true,
@@ -86,8 +86,8 @@ func TestLinksRoutes(t *testing.T) {
 			if tt.createLinkForUserA {
 				registerUser(t, api.router, userA.email, userA.password)
 				tokenUserA := loginUser(t, api.router, userA.email, userA.password)
-				linkID := createTestLink(t, api.router, tokenUserA, "https://example.com")
-				tt.url = strings.Replace(tt.url, "{link_id}", linkID, 1)
+				link := createTestLink(t, api.router, tokenUserA, "https://example.com")
+				tt.url = strings.Replace(tt.url, "{link_id}", link.ID.String(), 1)
 			}
 
 			req := httptest.NewRequest(tt.httpMethod, tt.url, strings.NewReader(tt.body))

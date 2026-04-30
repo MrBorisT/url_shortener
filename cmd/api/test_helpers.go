@@ -125,7 +125,7 @@ func loginUser(t *testing.T, router http.Handler, email, password string) string
 	return resp.Token
 }
 
-func createTestLink(t *testing.T, router http.Handler, token, originalURL string) string {
+func createTestLink(t *testing.T, router http.Handler, token, originalURL string) models.Link {
 	t.Helper()
 	body := fmt.Sprintf(`{"original_url":%q}`, originalURL)
 
@@ -150,5 +150,5 @@ func createTestLink(t *testing.T, router http.Handler, token, originalURL string
 		t.Fatalf("decode create link response: %v, body: %s", err, rr.Body.String())
 	}
 
-	return resp.OriginalURL
+	return resp
 }
